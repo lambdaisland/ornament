@@ -1,0 +1,11 @@
+#kaocha/v1
+{:plugins [:notifier
+           :print-invocations
+           :profiling]
+ :tests [{:id :clj}
+         {:id :cljs
+          :type :kaocha.type/cljs
+          :cljs/repl-env cljs.repl.browser/repl-env
+          :cljs/timeout 20000}]
+ :bindings {#_#_kaocha.type.cljs/*debug* true
+            kaocha.stacktrace/*stacktrace-filters* []}}
