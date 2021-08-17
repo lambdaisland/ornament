@@ -14,4 +14,6 @@
   {:extra-paths ["test"]
    :extra-deps  {lambdaisland/kaocha {:mvn/version "RELEASE"}
                  lambdaisland/kaocha-cljs {:mvn/version "RELEASE"}
-                 lambdaisland/webstuff {:local/root "/home/arne/github/lambdaisland/webstuff"}}}}}
+                 lambdaisland/webstuff {:git/url "https://github.com/lambdaisland/webstuff"
+                                        :sha "f77802ba2a3d69063fa2158ba6ed9987bdf91f5f"
+                                        #_#_:local/root "/home/arne/github/lambdaisland/webstuff"}}}}}

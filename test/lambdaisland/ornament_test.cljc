@@ -61,6 +61,9 @@
    {:grid-gap "1rem"
     :padding "0 2rem 2rem"}])
 
+(o/defstyled with-css-fn :a
+  [:&:after {:content [:cssfn :attr "href"]}])
+
 #?(:clj
    (deftest css-test
      (is (= ".ot__simple{color:#fff}"
