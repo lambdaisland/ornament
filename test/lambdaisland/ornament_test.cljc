@@ -26,7 +26,7 @@
 (o/defstyled with-body :p
   :px-5 :py-3 :rounded-xl
   {:color "azure"}
-  ([children]
+  ([& children]
    (into [:strong] children)))
 
 (o/defstyled timed :time
@@ -50,11 +50,12 @@
 
 (def my-tokens {:main-color "green"})
 
-;; Refenerencing non-defstyled variables in rules is only possible in Clojure
+;; Referencing non-defstyled variables in rules is only possible in Clojure
 #?(:clj
    (o/defstyled with-code :div
      {:background-color (-> my-tokens :main-color)}))
 
+;; TODO add assertions for these
 (o/defstyled with-media :div
   {:padding "0 1rem 1rem"}
   [:at-media {:min-width "1rem"}
@@ -62,7 +63,21 @@
     :padding "0 2rem 2rem"}])
 
 (o/defstyled with-css-fn :a
-  [:&:after {:content [:cssfn :attr "href"]}])
+  [:&:after {:content [:str " (" [:cssfn :attr "href"] ")"]}])
+
+(o/defstyled feature-check :div
+  [:at-supports {:display "grid"}
+   {:display "grid"}])
+
+(o/defstyled color-fns :div
+  {:color [:rgb 150 30 75]
+   :background-color [:hsla 235 100 50 0.5]})
+
+(o/defstyled nav-link :a
+  ([{:keys [id]}]
+   (let [{:keys [url title description]} {:url "/videos" :title "Videos" :description "Watch amazing videos"}]
+     ^{:href url :title description}
+     [:<> title])))
 
 #?(:clj
    (deftest css-test
@@ -115,7 +130,10 @@
     "<span class=\"ot__simple ot__timed\"></span>"
 
     [simple {:class [timed]}]
-    "<span class=\"ot__simple ot__timed\"></span>"))
+    "<span class=\"ot__simple ot__timed\"></span>"
+
+    [with-body "hello"]
+    "<p class=\"ot__with_body\"><strong>hello</strong></p>"))
 
 (o/defstyled custok1 :div
   :bg-primary)

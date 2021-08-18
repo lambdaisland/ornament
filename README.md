@@ -291,11 +291,20 @@ and converting the result to Garden syntax. Out of the box it supports all the
 same names that Tailwind provides, but you can define custom rules, or adjust
 the color palette. (See [Customizing Girouette](#customizing-girouette)).
 
+Note that you can mix and match these. You should be able to use a Girouette
+keyword anywhere where you would use a Garden properties map.
+
 ### Garden Extensions
 
 Ornament does a certain amount of pre-processing before passing the rules over
 to Garden for compilation. This allows us to support some extra syntax which we
 find more convenient.
+
+#### Special "tags"
+
+Use these as the first element in a vector to opt into special handling. Some of
+these are used where a selector would be used, others are helpers for defining
+property values.
 
 - `:at-media`
 
@@ -321,8 +330,217 @@ CSS functions can be invoked with `:cssfn`
   [:&:after {:content [:cssfn :attr "href"]}])
 ```
 
+- `:at-supports`
+
+Support for feature tests via `@supports`
+
+```clojure
+(o/defstyled feature-check :div
+  [:at-supports {:display "grid"}
+   {:display "grid"}])
+```
+
+- `:rgb` / `:hsl` / `:rgba` / `:hsla`
+
+Shorthands for color functions
+
+```clojure
+(o/defstyled color-fns :div
+  {:color [:rgb 150 30 75]
+   :background-color [:hsla 235 100 50 0.5]})
+
+(o/css color-fns)
+;;=>
+".ot__color_fns{color:#961e4b;background-color:hsla(235,100%,50%,0.5)}"
+```
+
+- `:str`
+
+Turns any strings into quoted strings, for cases where you need to put string content in your CSS.
+
+```clojure
+(o/defstyled with-css-fn :a
+  [:&:after {:content [:str " (" [:cssfn :attr "href"] ")"]}])
+```
+
+#### Special property handling
+
+Some property names we recognize and treat special, mainly to make it less
+tedious to define composite values.
+
+- `:grid-area` / `:border` / `:margin` / `:padding`
+
+Treat vector values as space-separated lists, e.g. `:padding [10 0 15 0]`.
+Non-vector values are passed on unchanged.
+
+- `:grid-template-areas`
+
+Use nested vectors to define the areas
+
+```clojure
+   :grid-template-areas [["title"      "title"      "user"]
+                         ["controlbar" "controlbar" "controlbar"]
+                         ["...."       "...."       "...."]
+                         ["...."       "...."       "...."]
+                         ["...."       "...."       "...."]
+```
+
+## Render functions
+
+After the component name, tag, and CSS rules, you can optionally put one or more
+render functions, consisting of an argument vector, and the function body.
+
+```clojure
+(o/defstyled with-body :p
+  :px-5 :py-3 :rounded-xl
+  {:color "azure"}
+  ([& children]
+   (into [:strong] children)))
+   
+[with-body "hello"]
+;;=>
+"<p class=\"ot__with_body\"><strong>hello</strong></p>"
+```
+
+You can put multiple of these to deal with multiple arities
+
+```clojure
+(o/defstyled multi-arity :p
+  ([arg1]
+   [:strong arg1])
+  ([arg1 arg2]
+   [:<>
+    [:strong arg1] [:em arg2]]))
+```
+
+Without render functions a styled component works almost like a plain HTML tag
+when using in Hiccup: the first argument, if it's a map, is treated as a map of
+HTML attributes, any following arguments are treated as children.
+
+When you supply your own render function this behavior changes. All arguments
+are passed to the render function to determine the children of the styled
+component. If the first argument is a map, then the `:class`, `:id`, and
+`:style` elements are added to the outer component (they are still passed to the
+render function as well).
+
+The rationale is that when using a styled component in your Hiccup, it should be
+straightforward to add an extra class or inline styling to the component. We
+don't want to break that use case. But we don't want to treat the map in the
+first argument as only consisting of HTML attributes in this case, since you may
+use that map to pass arbitrary values to the render function. So we lift out
+`:class`, `:id` and `:style`, and ignore the rest.
+
+```clojure
+(o/defstyled videos :section
+  ([{:keys [videos]}]
+   (into [:<>] (map #(do [video %]) videos))))
+```
+
+```clojure
+[videos {:videos (fetch-videos} :id "main-listing"}]
+```
+
+It is still possible to set extra HTML attributes on the component in this case,
+but it has to be done from *inside the render function*, through metadata on the
+return value.
+
+```clojure
+(o/defstyled nav-link :a
+  ([{:keys [id]}]
+   (let [{:keys [url title description]} (get-route id)]
+     ^{:href url :title description}
+     [:<> title])))
+
+;;=>
+<a href="/videos" title="Watch amazing videos" class="ot__nav_link">Videos</a>
+```
+
 ## Customizing Girouette
 
+Girouette is highly customizable. Out of the box it supports the same classes as
+Tailwind does, but you can customize the colors, fonts, or add completely new
+rules for recognizing class name.
+
+The `girouette-api` atom contains the result of `giroutte/make-api`. By
+replacing it you can customize how keywords are expanded to Garden. We provide a
+`set-tokens!` function which makes the common cases straightforward. This
+configures Girouette, so that these tokens become available inside Ornament
+style declarations.
+
+`set-tokens!` takes a map with these (optional) keys:
+
+- `:colors` : map from keyword to 6-digit hex color, without leading `#`
+- `:fonts`: map from keyword to font stack (comman separated string)
+- `:components`: sequence of Girouette components, each a map with `:id`
+  (keyword), `:rules` (string, instaparse, can be omitted), and `:garden` (map,
+  or function taking instaparse results and returning Garden map)
+
+
+```clojure
+(o/set-tokens! {:colors {:primary "001122"}
+                :fonts {:system "-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji"}
+                :components [{:id :full-center
+                              :garden {:display "inline-flex"
+                                       :align-items "center"}}
+                             {:id :full-center-bis
+                              :garden [:& :inline-flex :items-center]}
+                             {:id :custom-bullets
+                              :rules "custom-bullets = <'bullets-'> bullet-char
+                                 <bullet-char> = #\".\""
+                              :garden (fn [{[bullet-char] :component-data}]
+                                        [:&
+                                         {:list-style "none"
+                                          :padding 0
+                                          :margin 0}
+                                         [:li
+                                          {:padding-left "1rem"
+                                           :text-indent "-0.7rem"}]
+                                         ["li:before"
+                                          {:content bullet-char}]])}]})
+```
+
+Let's go over these. Colors is straightforward, it introduces a new color name,
+so now I can use classes like `:text-primary-500` or `:bg-primary`.
+
+Fonts provide the `:font-<name>` class, so in this case `:font-system`.
+
+With custom components there's a lot you can do. The first one here,
+`:full-center`, only has a `:garden` key, which has plain data as its value.
+This basically provides an alias or shorthand, so we can use `:full-center` in
+place of `{:display "inline-flex" :align-items "center"}`. The second one,
+`:full-center-bis` is essentially the same, but we've used other Girouette
+classes. Just as in `defstyled` you can use those too.
+
+The third one introduces a completely custom rule. It has a `:rules` key, which
+gets a string using Instaparse grammar syntax. Here we're definining a grammar
+which will recognize any classname starting with "bullets-" and followed by a
+single character.
+
+If `:rules` is omitted we assume this is a static token, and we'll generate a
+rule of the form `token-id = <'token-id'>`. That's what happens with the first
+two components.
+
+In this case the `:garden` key gets a function, which receives the parse
+information (under the `:component-data` key), and can use it to build up the
+Garden styling. Notice that we're using the "bullet-char" that we parsed out of
+the class name, to set the `:content` on `:li:before`.
+
+The end result is that we can do something like this:
+
+```clojure
+(o/defstyled bear-list :ul
+  :bullets-🐻)
+  
+[bear-list
+ [:li "Black"]
+ [:li "Formosan"]]
+```
+
+And get a bullet list which uses bear emojis for the bullets.
+
+`set-tokens` will add the new colors, fonts, and components to the defaults that
+Girouette provides. You can change that by adding a `^:replace` tag (this uses
+meta-merge). e.g. `{:colors ^:replace {...}}`) 
 
 <!-- opencollective -->
 ## Lambda Island Open Source

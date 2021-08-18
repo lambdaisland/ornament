@@ -193,8 +193,12 @@
 
      (defmethod process-tag :default [v]
        (let [tag (first v)]
-         (into [(if (= ::styled (type tag))
+         (into [(cond
+                  (= ::styled (type tag))
                   (classname tag)
+                  (sequential? tag)
+                  (process-rule tag)
+                  :else
                   tag)]
                (map process-rule (next v)))))
 
@@ -204,25 +208,26 @@
      (defmethod process-tag :cssfn [[_ fn-name & args]]
        (gt/->CSSFunction fn-name args))
 
-     (defmethod process-tag :at-font-face [[_ & props]]
-       ["@font-face" props])
-
-     (defmethod process-tag :at-import [[_ url & media-queries]]
-       (gt/->CSSAtRule :import {:url url :media-queries media-queries}))
-
      (defmethod process-tag :at-supports [[_ feature-queries & rules]]
-       (gt/->CSSAtRule :feature {:feature-queries feature-queries
-                                 :rules           (into [:&] rules)}))
-
-     (defmethod process-tag :at-keyframes [[_ identifier & frames]]
-       (gt/->CSSAtRule :keyframes {:identifier identifier
-                                   :frames     frames}))
+       (gt/->CSSAtRule
+        :feature
+        {:feature-queries feature-queries
+         :rules           (list (into [:&] (map (comp process-rule)) rules))}))
 
      (defmethod process-tag :rgb [[_ r g b]]
        (gcolor/rgb [r g b]))
 
      (defmethod process-tag :hsl [[_ h s l]]
        (gcolor/hsl [h s l]))
+
+     (defmethod process-tag :rgba [[_ r g b a]]
+       (gcolor/rgba [r g b a]))
+
+     (defmethod process-tag :hsla [[_ h s l a]]
+       (gcolor/hsla [h s l a]))
+
+     (defmethod process-tag :str [[_ & xs]]
+       [(map #(if (string? %) (pr-str %) (process-rule %)) xs)])
 
      (defmulti process-property
        "Special handling of certain CSS properties. E.g. setting `:grid-template-areas`
