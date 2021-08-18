@@ -478,60 +478,56 @@
                    (vec styles)
                    (symbol? tagname)
                    (into (or (:rules (get @registry (qualify-sym tagname))) [])
-                         styles))]
+                         styles))
+
+           ;; For ClojureScript support (but also used in Clojure-only), add the
+           ;; Clojure-version of the styled component to the registry directly
+           ;; during macroexpansion, so that even in a ClojureScript-only world
+           ;; we can access it later to compile the styles, even though the
+           ;; styles themselves are never part of a ClojureScript build.
+           ;;
+           ;; To allow using previously defined styled components as selectors
+           ;; we do our own resolution of these symbols, if we recognize them.
+           ;; This is necessary since in ClojureScript rules are fully handled
+           ;; on the Clojure side (we don't want any of the CSS overhead in the
+           ;; build output), and when defined defstyled in cljs files there are
+           ;; no Clojure vars that we can resolve, so we need to resolve this
+           ;; ourselves via the registry.
+           rules (eval `(do
+                          (in-ns '~(ns-name *ns*))
+                          ~(walk/postwalk
+                            (fn [o]
+                              (if (and (vector? o)
+                                       (symbol? (first o))
+                                       (contains? @registry (qualify-sym (first o))))
+                                (assoc o 0 `(get @registry '~(qualify-sym (first o))))
+                                o))
+                            rules)))]
        (swap! registry
               (fn [reg]
                 (-> reg
-                    (assoc varsym {:var varsym
-                                   :tag tag
-                                   :rules rules
-                                   :classname css-class
-                                   ;; For ClojureScript support (but also used
-                                   ;; in Clojure-only), add the Clojure-version
-                                   ;; of the styled component to the registry
-                                   ;; directly during macroexpansion, so that
-                                   ;; even in a ClojureScript-only world we can
-                                   ;; access it later to compile the styles,
-                                   ;; even though the styles themselves are
-                                   ;; never part of a ClojureScript build.
-                                   ;;
-                                   ;; To allow using previously defined styled
-                                   ;; components as selectors we do our own
-                                   ;; resolution of these symbols, if we
-                                   ;; recognize them. This is necessary since in
-                                   ;; ClojureScript rules are fully handled on
-                                   ;; the Clojure side (we don't want any of the
-                                   ;; CSS overhead in the build output), and
-                                   ;; when defined defstyled in cljs files there
-                                   ;; are no Clojure vars that we can resolve,
-                                   ;; so we need to resolve this ourselves via
-                                   ;; the registry.
-                                   :component (eval `(do
-                                                       (in-ns '~(ns-name *ns*))
-                                                       (styled '~varsym
-                                                               ~css-class
-                                                               ~tag
-                                                               ~(walk/postwalk
-                                                                 (fn [o]
-                                                                   (if (and (vector? o)
-                                                                            (symbol? (first o))
-                                                                            (contains? @registry (qualify-sym (first o))))
-                                                                     (assoc o 0 `(get @registry '~(qualify-sym (first o))))
-                                                                     o))
-                                                                 rules)
-                                                               nil)))})
+                    (update varsym merge {:var varsym
+                                          :tag tag
+                                          :rules rules
+                                          :classname css-class
+                                          :component (styled varsym
+                                                             css-class
+                                                             tag
+                                                             rules
+                                                             nil)})
                     ;; We give each style an incrementing index so they get a
                     ;; predictable order (i.e. source order). If a style is
                     ;; evaluated again (e.g. REPL use) then it keeps its
                     ;; original index/position.
                     (update-in [varsym :index] (fnil identity (count reg))))))
+
        ;; Actual output of the macro, this creates a styled component as a var,
        ;; so that it can be used in Hiccup. This `styled` invocation in turn is
        ;; platform-specific, the ClojureScript version only knows how to render
        ;; the component with the appropriate classes, it has no knowledge of the
        ;; actual styles, which are expected to be rendered on the backend or
        ;; during compilation.
-       `(def ~(with-meta sym {::css true})
+       `(def ~(with-meta sym {::css true :ornament (dissoc (get @registry varsym) :component)})
           (styled '~varsym
                   ~css-class
                   ~tag
@@ -554,11 +550,28 @@
      (let [registry-css (->> @registry
                              vals
                              (sort-by :index)
-                             (map (comp css :component)))]
+                             (map (fn [{:keys [var tag rules classname]}]
+                                    (css (styled var classname tag rules nil)))))]
        (cond->> registry-css
          preflight? (into [(gc/compile-css girouette-preflight/preflight)])
          :always (str/join "\n")))))
 
+#?(:clj
+   (defn cljs-restore-registry
+     "Restore the Ornament registry based on a ClojureScript compiler env
+
+  Due to caching some defstyled macros may not get recompiled, causing gaps in
+  the CSS. To work around this we add Ornament data to the cljs analyzer var
+  metadata, so it gets cached and restored with the rest of the analyzer state."
+     [compiler-env]
+     (when (empty? @registry)
+       (reset! registry
+               (into {}
+                     (for [[_ {:keys [defs]}] (:cljs.analyzer/namespaces compiler-env)
+                           [_ {{:keys [ornament]} :meta}] defs
+                           :when ornament]
+                       [(:var ornament) ornament]))))))
+
 (comment
-  (spit "/tmp/ornament.css" (defined-styles))
-  )
+ (spit "/tmp/ornament.css" (defined-styles))
+ )
