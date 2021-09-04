@@ -16,4 +16,7 @@
                  lambdaisland/kaocha-cljs {:mvn/version "RELEASE"}
                  lambdaisland/webstuff {:git/url "https://github.com/lambdaisland/webstuff"
                                         :sha "f77802ba2a3d69063fa2158ba6ed9987bdf91f5f"
-                                        #_#_:local/root "/home/arne/github/lambdaisland/webstuff"}}}}}
+                                        #_#_:local/root "/home/arne/github/lambdaisland/webstuff"}}}
+
+  :cssparser
+  {:extra-deps {net.sourceforge.cssparser/cssparser {:mvn/version "0.9.29"}}}}}
