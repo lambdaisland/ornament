@@ -500,7 +500,7 @@
                               (if (and (vector? o)
                                        (symbol? (first o))
                                        (contains? @registry (qualify-sym (first o))))
-                                (assoc o 0 `(get @registry '~(qualify-sym (first o))))
+                                (assoc o 0 `(str "." (get-in @registry ['~(qualify-sym (first o)) :classname])))
                                 o))
                             rules)))]
        (swap! registry

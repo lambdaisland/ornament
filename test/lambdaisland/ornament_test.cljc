@@ -96,7 +96,7 @@
      (is (= ".ot__with_body{padding-left:1.25rem;padding-right:1.25rem;padding-top:.75rem;padding-bottom:.75rem;border-radius:.75rem;color:azure}"
             (o/css with-body)))
 
-     (is (= ".ot__ornament_in_ornament{color:blue}.ot__ornament_in_ornament ot__simple{color:red}"
+     (is (= ".ot__ornament_in_ornament{color:blue}.ot__ornament_in_ornament .ot__simple{color:red}"
             (o/css ornament-in-ornament)))
 
      (is (= ".ot__inherited{color:green;background-color:red;list-style:square}"
