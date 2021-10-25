@@ -36,6 +36,9 @@
    ^{:datetime (str date " " time)}
    [:<> date " " time]))
 
+(o/defstyled simple :span
+  {:color "#ffffff"})
+
 (o/defstyled ornament-in-ornament :div
   {:color "blue"}
   [simple {:color "red"}])
