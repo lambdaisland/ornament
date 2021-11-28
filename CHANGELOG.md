@@ -8,6 +8,8 @@
 
 ## Changed
 
+- Bump Girouette to 0.0.6
+
 # 0.1.12 (2021-10-25 / d0a739b)
 
 ## Changed
