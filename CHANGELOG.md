@@ -4,6 +4,8 @@
 
 ## Fixed
 
+- Fix issue where girouette tokens were not being applied to child elements. [See Github Issue](https://github.com/lambdaisland/ornament/issues/5)
+
 ## Changed
 
 # 0.1.12 (2021-10-25 / d0a739b)
