@@ -15,6 +15,10 @@
 (o/defstyled tokens :span
   :px-5 :py-3 :rounded-xl)
 
+(o/defstyled child-selector-tokens :div
+  :pt-4
+  :space-y-2)
+
 (o/defstyled combined :span
   :px-5 :py-3 :rounded-xl
   {:color "azure"})
@@ -89,6 +93,9 @@
 
      (is (= ".ot__tokens{padding-left:1.25rem;padding-right:1.25rem;padding-top:.75rem;padding-bottom:.75rem;border-radius:.75rem}"
             (o/css tokens)))
+
+     (is (= ".ot__child_selector_tokens{padding-top:1rem}.ot__child_selector_tokens>*+*{margin-top:.5rem}"
+            (o/css child-selector-tokens)))
 
      (is (= ".ot__combined{padding-left:1.25rem;padding-right:1.25rem;padding-top:.75rem;padding-bottom:.75rem;border-radius:.75rem;color:azure}"
             (o/css combined)))
