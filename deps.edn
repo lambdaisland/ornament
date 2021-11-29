@@ -14,6 +14,7 @@
   {:extra-paths ["test"]
    :extra-deps  {lambdaisland/kaocha {:mvn/version "RELEASE"}
                  lambdaisland/kaocha-cljs {:mvn/version "RELEASE"}
+                 ;; for lambdaisland.hiccup and lambdaisland.thicc, used in testing
                  lambdaisland/webstuff {:git/url "https://github.com/lambdaisland/webstuff"
                                         :git/sha "fc4e2b7e41dd4e3db9a2778b9c69d92148d0549c"
                                         #_#_:local/root "/home/arne/github/lambdaisland/webstuff"}}}
