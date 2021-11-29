@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.lambdaisland</groupId>
   <artifactId>ornament</artifactId>
-  <version>0.1.12</version>
+  <version>0.2.19</version>
   <name>ornament</name>
   <description></description>
   <url>https://github.com/lambdaisland/ornament</url>
@@ -22,7 +22,7 @@
     <url>https://github.com/lambdaisland/ornament</url>
     <connection>scm:git:git://github.com/lambdaisland/ornament.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/lambdaisland/ornament.git</developerConnection>
-    <tag>6b52ec140c0379f3846dc9473fe928b3b930ad96</tag>
+    <tag>d4703ad3494a67a3a3394780179b294946ee6378</tag>
   </scm>
   <dependencies>
     <dependency>
@@ -33,7 +33,7 @@
     <dependency>
       <groupId>girouette</groupId>
       <artifactId>girouette</artifactId>
-      <version>0.0.5</version>
+      <version>0.0.6</version>
     </dependency>
     <dependency>
       <groupId>meta-merge</groupId>
@@ -64,7 +64,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <git-revision>6b52ec140c0379f3846dc9473fe928b3b930ad96</git-revision>
+              <git-revision>d4703ad3494a67a3a3394780179b294946ee6378</git-revision>
             </manifestEntries>
           </archive>
         </configuration>

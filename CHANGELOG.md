@@ -1,3 +1,11 @@
+# Unreleased
+
+## Added
+
+## Fixed
+
+## Changed
+
 # 0.2.19 (2021-11-29 / 6c8e226)
 
 ## Added
