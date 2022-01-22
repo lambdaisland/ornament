@@ -152,6 +152,38 @@ styles. You can for instance write your own script that invokes the
 ClojureScript build API, then follows it up by writing out the styles, or you
 can use something like Shadow-cljs build hooks.
 
+### Shadow-cljs build hook example
+
+This is enough to get recompilation of your styles to CSS, which shadow-cljs
+will then hot-reload.
+
+```clojure
+;; this should be a clj or cljc file. If you make it cljc then wrap
+;; `write-styles-hook` into a `#?(:clj ...)`. You can still declare
+;; styles/components in cljs files.
+
+(ns my.styles
+  (:require [lambdaisland.ornament :as o]))
+
+(defn write-styles-hook
+  {:shadow.build/stage :flush}
+  [build-state]
+  (spit "resources/public/styles.css"
+        (o/defined-styles))
+  build-state)
+```
+
+```clojure
+;; shadow-cljs.edn
+{:builds
+ {:main
+  {:target     :browser
+   ,,,
+   :build-hooks [(my./write-styles-hook)]}}}
+```
+
+
+
 ## Defstyled Component Syntax
 
 `defstyled` really does two things, the macro expands to a form like
