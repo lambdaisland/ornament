@@ -451,15 +451,25 @@
         component))))
 
 #?(:clj
-   (defn qualify-sym [s]
+   (defn qualify-sym [env s]
      (when (symbol? s)
-       (if (simple-symbol? s)
-         (or (some-> (ns-refers *ns*) (get s) symbol)
-             (symbol (str *ns*) (str s)))
-         (let [ns (namespace s)
-               n (name s)
-               aliases (ns-aliases *ns*)]
-           (symbol (or (some-> aliases (get (symbol ns)) ns-name str) ns) n))))))
+       (if (:ns env)
+         ;; cljs
+         (if (simple-symbol? s)
+           (or (some-> env :ns :uses s name (symbol (name s)))
+               (symbol (name (-> env :ns :name)) (name s)))
+           (symbol (or (some-> env :ns :requires (get (symbol (namespace s))) name)
+                       (namespace s))
+                   (name s)))
+
+         ;; clj
+         (if (simple-symbol? s)
+           (or (some-> (ns-refers *ns*) (get s) symbol)
+               (symbol (str *ns*) (str s)))
+           (let [ns (namespace s)
+                 n (name s)
+                 aliases (ns-aliases *ns*)]
+             (symbol (or (some-> aliases (get (symbol ns)) ns-name str) ns) n)))))))
 
 #?(:clj (defn fn-tail? [o]
           (and (list? o)
@@ -472,12 +482,12 @@
            [styles fn-tails] (split-with (complement fn-tail?) styles)
            tag (if (keyword? tagname)
                  tagname
-                 (get-in @registry [(qualify-sym tagname) :tag]))
+                 (get-in @registry [(qualify-sym &env tagname) :tag]))
            rules (cond
                    (keyword? tagname)
                    (vec styles)
                    (symbol? tagname)
-                   (into (or (:rules (get @registry (qualify-sym tagname))) [])
+                   (into (or (:rules (get @registry (qualify-sym &env tagname))) [])
                          styles))
 
            ;; For ClojureScript support (but also used in Clojure-only), add the
@@ -499,8 +509,8 @@
                             (fn [o]
                               (if (and (vector? o)
                                        (symbol? (first o))
-                                       (contains? @registry (qualify-sym (first o))))
-                                (assoc o 0 `(str "." (get-in @registry ['~(qualify-sym (first o)) :classname])))
+                                       (contains? @registry (qualify-sym &env (first o))))
+                                (assoc o 0 `(str "." (get-in @registry ['~(qualify-sym &env (first o)) :classname])))
                                 o))
                             rules)))]
        (swap! registry

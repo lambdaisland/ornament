@@ -158,28 +158,51 @@ This is enough to get recompilation of your styles to CSS, which shadow-cljs
 will then hot-reload.
 
 ```clojure
-;; this should be a clj or cljc file. If you make it cljc then wrap
-;; `write-styles-hook` into a `#?(:clj ...)`. You can still declare
-;; styles/components in cljs files.
+;; Easiest to just make this a clj file.
+(ns my.hooks
+  (:require [lambdaisland.ornament :as o]
+            [garden.compiler :as gc]
+            [girouette.tw.preflight :as girouette-preflight]))
 
-(ns my.styles
-  (:require [lambdaisland.ornament :as o]))
+;; Optional, but it's common to still have some style rules that are not
+;; component-specific, so you can use Garden directly for that
+(def global-styles
+  [[:html {:font-size "14pt"}]])
 
 (defn write-styles-hook
   {:shadow.build/stage :flush}
-  [build-state]
+  [build-state & args]
+  ;; In case your global-styles is in a separate clj file you will have to
+  ;; reload it yourself, shadow only reloads/recompiles cljs/cljc files
+  #_(require my.styles :reload)
+  ;; Just writing out the CSS is enough, shadow will pick it up (make sure you
+  ;; have a <link href=styles.css rel=stylesheet>)
   (spit "resources/public/styles.css"
-        (o/defined-styles))
+        (str
+         ;; `defined-styles` takes a :preflight? flag, but we like to have some
+         ;; style rules between the preflight and the components. This whole bit
+         ;; is optional.
+         (gc/compile-css (concat
+                          girouette-preflight/preflight
+                          styles/global-styles))
+         "\n"
+         (o/defined-styles)))
   build-state)
 ```
 
 ```clojure
 ;; shadow-cljs.edn
-{:builds
+{,,,
+
+ ;; For best results, otherwise you will find that some styles are missing after
+ ;; restarting the shadow process
+ :cache-blockers #{lambdaisland.ornament}
+
+ :builds
  {:main
   {:target     :browser
    ,,,
-   :build-hooks [(my./write-styles-hook)]}}}
+   :build-hooks [(my.hooks/write-styles-hook)]}}}
 ```
 
 
