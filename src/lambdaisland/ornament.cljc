@@ -507,10 +507,17 @@
                           (in-ns '~(ns-name *ns*))
                           ~(walk/postwalk
                             (fn [o]
-                              (if (and (vector? o)
-                                       (symbol? (first o))
-                                       (contains? @registry (qualify-sym &env (first o))))
-                                (assoc o 0 `(str "." (get-in @registry ['~(qualify-sym &env (first o)) :classname])))
+                              (if (vector? o)
+                                (into [(if (and (symbol? (first o))
+                                                (contains? @registry (qualify-sym &env (first o))))
+                                         `(str "." (get-in @registry ['~(qualify-sym &env (first o)) :classname]))
+                                         (first o))]
+                                      (mapcat (fn [s]
+                                                (if (and (symbol? s)
+                                                         (contains? @registry (qualify-sym &env s)))
+                                                  (get-in @registry [(qualify-sym &env s) :rules])
+                                                  [s])))
+                                      (next o))
                                 o))
                             rules)))]
        (swap! registry
