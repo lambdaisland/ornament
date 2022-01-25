@@ -6,8 +6,9 @@
 (lioss/main
  {:license          :mpl
   :inception-year   2021
-  :description      ""
-  :group-id         "com.lambdaisland"})
+  :description      "Clojure Styled Components"
+  :group-id         "com.lambdaisland"
+  :aliases-as-optional-deps [:byo]})
 
 ;; Local Variables:
 ;; mode:clojure

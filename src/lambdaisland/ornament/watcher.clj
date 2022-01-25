@@ -4,7 +4,9 @@
   We generally combine this with Figwheel, and let figwheel handle reloading the
   CLJ files, as well as hot-loading the new CSS in the browser.
 
-  Hawk and Glögi are BYO"
+  For shadow-cljs use build-hooks, see the Ornament README for an example.
+
+  Hawk and Glögi are BYO (you need to declare the dependencies yourself.)"
   (:require [clojure.java.io :as io]
             [hawk.core :as hawk]
             [lambdaisland.glogc :as log]
