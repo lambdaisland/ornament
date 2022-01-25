@@ -434,13 +434,140 @@ ClojureScript, even though in ClojureScript usage you can't normally reference
 vars inside your style declaration. To make these work we resolve these symbols
 during compilation based on Ornament's registry of components.
 
+## Render functions
+
+After the component name, tag, and CSS rules, you can optionally put one or more
+render functions, consisting of an argument vector, and the function body.
+
+```clojure
+(o/defstyled with-body :p
+  :px-5 :py-3 :rounded-xl
+  {:color "azure"}
+  ([& children]
+   (into [:strong] children)))
+   
+[with-body "hello"]
+;;=>
+"<p class=\"ot__with_body\"><strong>hello</strong></p>"
+```
+
+You can put multiple of these to deal with multiple arities
+
+```clojure
+(o/defstyled multi-arity :p
+  ([arg1]
+   [:strong arg1])
+  ([arg1 arg2]
+   [:<>
+    [:strong arg1] [:em arg2]]))
+```
+
+Without render functions a styled component works almost like a plain HTML tag
+when using in Hiccup: the first argument, if it's a map, is treated as a map of
+HTML attributes, any following arguments are treated as children.
+
+When you supply your own render function this behavior changes. All arguments
+are passed to the render function to determine the children of the styled
+component. If the first argument is a map, then the `:class`, `:id`, and
+`:style` elements are added to the outer component (they are still passed to the
+render function as well).
+
+The rationale is that when using a styled component in your Hiccup, it should be
+straightforward to add an extra class or inline styling to the component. We
+don't want to break that use case. But we don't want to treat the map in the
+first argument as only consisting of HTML attributes in this case, since you may
+use that map to pass arbitrary values to the render function. So we lift out
+`:class`, `:id` and `:style`, and ignore the rest.
+
+```clojure
+(o/defstyled videos :section
+  ([{:keys [videos]}]
+   (into [:<>] (map #(do [video %]) videos))))
+```
+
+```clojure
+[videos {:videos (fetch-videos} :id "main-listing"}]
+```
+
+It is still possible to set extra HTML attributes on the component in this case,
+but it has to be done from *inside the render function*, through metadata on the
+return value.
+
+```clojure
+(o/defstyled nav-link :a
+  ([{:keys [id]}]
+   (let [{:keys [url title description]} (get-route id)]
+     ^{:href url :title description}
+     [:<> title])))
+
+;;=>
+<a href="/videos" title="Watch amazing videos" class="ot__nav_link">Videos</a>
+```
+
+## Differences from Garden
+
+The rules section of a component is essentially
+[Garden](https://github.com/noprompt/garden) syntax. We run it through the
+Garden compiler, and so things that work in Garden generally work there as well,
+with some exceptions.
+
+Keywords that come first inside a vector are always treated as CSS selectors, as
+you would expect, but if they occur elsewhere then we first pass them to
+Girouette to expand to style rules class names. If Girouette does not recognize
+the keyword as a classname, then it's preserved in the Garden as-is.
+
+That means that generally things work as expected, since selectors and Girouette
+classes don't have much overlap.
+
+```clojure
+;; ✔️ :ol is recognized as a selector
+
+(o/defstyled list-wrapper :div
+  [:ul :ol {:background-color "blue"}])
+
+(o/css list-wrapper)
+;; => ".ot__list_wrapper ul,.ot__list_wrapper ol{background-color:blue}"
+
+;; ✔️ :bg-blue-500 is recognized as a utility class
+
+(o/defstyled list-wrapper :div
+  [:ul :bg-blue-500])
+
+(o/css list-wrapper)
+;; => ".ot__list_wrapper ul{--gi-bg-opacity:1;background-color:rgba(59,130,246,var(--gi-bg-opacity))}"
+```
+
+But there is some potential for clashes, e.g. Girouette has a `:table` class.
+
+```clojure
+;; ❌ not what we wanted
+
+(o/defstyled fig-wrapper :div
+  [:figure :table {:padding "1rem"}])
+  
+(o/css fig-wrapper)
+;; => ".ot__fig_wrapper figure{display:table;padding:1rem}"
+```
+
+Instead use a set to make it explicit that these are multiple selectors. It's
+good practice to do this in general since it is more explicit and reduces
+ambiguity and chance of clashes.
+
+```clojure
+(o/defstyled fig-wrapper :div
+  [#{:figure :table} {:padding "1rem"}])
+
+(o/css fig-wrapper)
+;; => ".ot__fig_wrapper figure,.ot__fig_wrapper table{padding:1rem}"
+```
+
 ### Garden Extensions
 
 Ornament does a certain amount of pre-processing before passing the rules over
 to Garden for compilation. This allows us to support some extra syntax which we
 find more convenient.
 
-#### Special "tags"
+### Special "tags"
 
 Use these as the first element in a vector to opt into special handling. Some of
 these are used where a selector would be used, others are helpers for defining
@@ -523,76 +650,6 @@ Use nested vectors to define the areas
                          ["...."       "...."       "...."]
                          ["...."       "...."       "...."]
                          ["...."       "...."       "...."]
-```
-
-## Render functions
-
-After the component name, tag, and CSS rules, you can optionally put one or more
-render functions, consisting of an argument vector, and the function body.
-
-```clojure
-(o/defstyled with-body :p
-  :px-5 :py-3 :rounded-xl
-  {:color "azure"}
-  ([& children]
-   (into [:strong] children)))
-   
-[with-body "hello"]
-;;=>
-"<p class=\"ot__with_body\"><strong>hello</strong></p>"
-```
-
-You can put multiple of these to deal with multiple arities
-
-```clojure
-(o/defstyled multi-arity :p
-  ([arg1]
-   [:strong arg1])
-  ([arg1 arg2]
-   [:<>
-    [:strong arg1] [:em arg2]]))
-```
-
-Without render functions a styled component works almost like a plain HTML tag
-when using in Hiccup: the first argument, if it's a map, is treated as a map of
-HTML attributes, any following arguments are treated as children.
-
-When you supply your own render function this behavior changes. All arguments
-are passed to the render function to determine the children of the styled
-component. If the first argument is a map, then the `:class`, `:id`, and
-`:style` elements are added to the outer component (they are still passed to the
-render function as well).
-
-The rationale is that when using a styled component in your Hiccup, it should be
-straightforward to add an extra class or inline styling to the component. We
-don't want to break that use case. But we don't want to treat the map in the
-first argument as only consisting of HTML attributes in this case, since you may
-use that map to pass arbitrary values to the render function. So we lift out
-`:class`, `:id` and `:style`, and ignore the rest.
-
-```clojure
-(o/defstyled videos :section
-  ([{:keys [videos]}]
-   (into [:<>] (map #(do [video %]) videos))))
-```
-
-```clojure
-[videos {:videos (fetch-videos} :id "main-listing"}]
-```
-
-It is still possible to set extra HTML attributes on the component in this case,
-but it has to be done from *inside the render function*, through metadata on the
-return value.
-
-```clojure
-(o/defstyled nav-link :a
-  ([{:keys [id]}]
-   (let [{:keys [url title description]} (get-route id)]
-     ^{:href url :title description}
-     [:<> title])))
-
-;;=>
-<a href="/videos" title="Watch amazing videos" class="ot__nav_link">Videos</a>
 ```
 
 ## Customizing Girouette
@@ -737,7 +794,7 @@ changes are justified.
 <!-- license -->
 ## License
 
-Copyright &copy; 2020 Arne Brasseur and contributors
+Copyright &copy; 2021-2022 Arne Brasseur and contributors
 
 Available under the terms of the Eclipse Public License 1.0, see LICENSE.txt
 <!-- /license -->

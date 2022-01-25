@@ -193,13 +193,15 @@
 
      (defmethod process-tag :default [v]
        (let [tag (first v)]
-         (into [(cond
-                  (= ::styled (type tag))
-                  (classname tag)
-                  (sequential? tag)
-                  (process-rule tag)
-                  :else
-                  tag)]
+         (into (if (set? tag)
+                 (into [] tag)
+                 [(cond
+                    (= ::styled (type tag))
+                    (classname tag)
+                    (sequential? tag)
+                    (process-rule tag)
+                    :else
+                    tag)])
                (map process-rule (next v)))))
 
      (defmethod process-tag :at-media [[_ media-queries & rules]]
@@ -267,11 +269,17 @@
 
          (simple-keyword? rule)
          (let [girouette-garden (class-name->garden (name rule))]
-           (if (and (record? girouette-garden)
-                    (= (:identifier girouette-garden) :media))
+           (cond
+             (nil? girouette-garden)
+             #_(throw (ex-info "Girouette style expansion failed" {:rule rule}))
+             rule
+
+             (and (record? girouette-garden)
+                  (= (:identifier girouette-garden) :media))
              (-> girouette-garden
                  (update-in [:value :rules] (fn [rules]
                                               (map #(into [:&] (rest %)) rules))))
+             :else
              (second girouette-garden)))
 
          (map? rule)

@@ -3,6 +3,7 @@
 ## Fixed
 
 - Improve ClojureScript support, in particular referencing components in other components style rules
+- Support vectors with multiple selectors, plus alternative syntax with sets
 
 # 0.2.19 (2021-11-29 / 6c8e226)
 

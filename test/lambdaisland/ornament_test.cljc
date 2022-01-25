@@ -93,6 +93,16 @@
   [referenced {:color :red}] ;; use as classname
   [:.foo referenced]) ;; use as style rule
 
+(o/defstyled siblings :p
+  ;; Because of Tailwind/Girouette we can't always use the [:foo :bar {styles}]
+  ;; garden syntax, instead we support using a set for this.
+  [#{:span :div} {:color "red"}])
+
+(o/defstyled siblings-plain :div
+  ;; Plain garden version still works *if* it doesn't clash with anything
+  ;; Girouette recognizes.
+  [:ul :ol {:background-color "blue"}])
+
 #?(:clj
    (deftest css-test
      (is (= ".ot__simple{color:#fff}"
@@ -127,7 +137,13 @@
             (o/css with-media)))
 
      (is (= ".ot__referer .ot__referenced{color:red}.ot__referer .foo{color:blue}"
-            (o/css referer)))))
+            (o/css referer)))
+
+     (is (= (o/css siblings)
+            ".ot__siblings div,.ot__siblings span{color:red}"))
+
+     (is (= ".ot__siblings_plain ul,.ot__siblings_plain ol{background-color:blue}"
+            (o/css siblings-plain)))))
 
 (deftest rendering-test
   (are [hiccup html] (= html (render hiccup))
@@ -270,7 +286,26 @@
 
        (reset! o/registry reg))))
 
-(o/defstyled tea :div
-  :bg-red-200
-  :md:text-green-900
-  {:color "MediumSeaGreen"})
+
+(o/defstyled list-wrapper :div
+  [:ul :ol {:background-color "blue"}])
+
+(o/css list-wrapper)
+;; => ".ot__list_wrapper ul,.ot__list_wrapper ol{background-color:blue}"
+
+;; ✔️ :bg-blue-500 is recognized as a utility class
+
+(o/defstyled list-wrapper :div
+  [:ul :bg-blue-500])
+
+(o/css list-wrapper)
+;; => ".ot__list_wrapper ul{--gi-bg-opacity:1;background-color:rgba(59,130,246,var(--gi-bg-opacity))}"
+
+
+(o/defstyled fig-wrapper :div
+  [#{:figure :table} {:padding "1rem"}])
+
+(o/css fig-wrapper)
+;; => ".ot__fig_wrapper figure,.ot__fig_wrapper table{padding:1rem}"
+
+;; => ".ot__fig_wrapper figure{display:table;padding:1rem}"
