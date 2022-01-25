@@ -86,6 +86,13 @@
      ^{:href url :title description}
      [:<> title])))
 
+(o/defstyled referenced :div
+  {:color :blue})
+
+(o/defstyled referer :p
+  [referenced {:color :red}] ;; use as classname
+  [:.foo referenced]) ;; use as style rule
+
 #?(:clj
    (deftest css-test
      (is (= ".ot__simple{color:#fff}"
@@ -117,7 +124,10 @@
                (o/css with-code))))
 
      (is (= ".ot__with_media{padding:0 1rem 1rem}@media(min-width:1rem){.ot__with_media{grid-gap:1rem;padding:0 2rem 2rem}}"
-            (o/css with-media)))))
+            (o/css with-media)))
+
+     (is (= ".ot__referer .ot__referenced{color:red}.ot__referer .foo{color:blue}"
+            (o/css referer)))))
 
 (deftest rendering-test
   (are [hiccup html] (= html (render hiccup))

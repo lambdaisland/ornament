@@ -145,6 +145,8 @@ requiring all namespaces. If you have some kind of main application entry point
 that loads all your components/views, then load that, and capture the styles
 once it has finished.
 
+### ClojureScript
+
 For ClojureScript you have two options, either you define all you components in
 `cljc` files, and use the same approach as in Clojure. The alternative is to
 first run your ClojureScript build, and then in the same process write out the
@@ -152,37 +154,100 @@ styles. You can for instance write your own script that invokes the
 ClojureScript build API, then follows it up by writing out the styles, or you
 can use something like Shadow-cljs build hooks.
 
-### Shadow-cljs build hook example
+#### Limitations
+
+Keep in mind that the style (Garden/CSS) section of a component is only ever
+processed in Clojure, even when used in ClojureScript files. This means that it
+is not possible to reference ClojureScript variables or functions.
+
+```clojure
+(def sizes {:s "0.5rem" :m "1.rem" :l "2rem"})
+
+(o/defstyled foo :div
+  {:padding (:m sizes)})
+```
+
+This will work in Clojure, but not ClojureScript. Referencing
+variables/functions inside the component body is not a problem.
+
+```clojure
+(def divider [:hr])
+
+(o/defstyled dividers :div
+  {:padding "1rem"}
+  ([& children]
+   (into [:<>]
+         (interpose divider)
+         children)))
+```
+
+This works in both Clojure and ClojureScript.
+
+Note that it *is* possible to reference previously defined `defstyled`
+components in the style rules section, even in ClojureScript, see the section
+"Referencing other components in Rules" below.
+
+```clojure
+(o/defstyled referenced :div
+  {:color :blue})
+
+(o/defstyled referer :p
+  [referenced {:color :red}] ;; use as classname
+  [:.foo referenced]) ;; use as style rule
+```
+
+#### Shadow-cljs build hook example
 
 This is enough to get recompilation of your styles to CSS, which shadow-cljs
 will then hot-reload.
 
 ```clojure
-;; this should be a clj or cljc file. If you make it cljc then wrap
-;; `write-styles-hook` into a `#?(:clj ...)`. You can still declare
-;; styles/components in cljs files.
+;; Easiest to just make this a clj file.
+(ns my.hooks
+  (:require [lambdaisland.ornament :as o]
+            [garden.compiler :as gc]
+            [girouette.tw.preflight :as girouette-preflight]))
 
-(ns my.styles
-  (:require [lambdaisland.ornament :as o]))
+;; Optional, but it's common to still have some style rules that are not
+;; component-specific, so you can use Garden directly for that
+(def global-styles
+  [[:html {:font-size "14pt"}]])
 
 (defn write-styles-hook
   {:shadow.build/stage :flush}
-  [build-state]
+  [build-state & args]
+  ;; In case your global-styles is in a separate clj file you will have to
+  ;; reload it yourself, shadow only reloads/recompiles cljs/cljc files
+  #_(require my.styles :reload)
+  ;; Just writing out the CSS is enough, shadow will pick it up (make sure you
+  ;; have a <link href=styles.css rel=stylesheet>)
   (spit "resources/public/styles.css"
-        (o/defined-styles))
+        (str
+         ;; `defined-styles` takes a :preflight? flag, but we like to have some
+         ;; style rules between the preflight and the components. This whole bit
+         ;; is optional.
+         (gc/compile-css (concat
+                          girouette-preflight/preflight
+                          styles/global-styles))
+         "\n"
+         (o/defined-styles)))
   build-state)
 ```
 
 ```clojure
 ;; shadow-cljs.edn
-{:builds
+{,,,
+
+ ;; For best results, otherwise you will find that some styles are missing after
+ ;; restarting the shadow process
+ :cache-blockers #{lambdaisland.ornament}
+
+ :builds
  {:main
   {:target     :browser
    ,,,
-   :build-hooks [(my./write-styles-hook)]}}}
+   :build-hooks [(my.hooks/write-styles-hook)]}}}
 ```
-
-
 
 ## Defstyled Component Syntax
 
@@ -325,6 +390,49 @@ the color palette. (See [Customizing Girouette](#customizing-girouette)).
 
 Note that you can mix and match these. You should be able to use a Girouette
 keyword anywhere where you would use a Garden properties map.
+
+#### Referencing other components in Rules
+
+You can use a previously defined `defstyled` component either as a selector, or
+as a style rule.
+
+Consider this "call to action" button.
+
+```clojure
+(o/defstyled cta :button
+  {:background-color "red"})
+```
+
+You might use it as part of another component, and add additional styling for
+that context.
+
+```clojure
+(o/defstyled buy-now-section :div
+  [cta {:padding "2rem"}]
+  ([]
+   [:<>
+    [:p "The best widgest in the world"]
+    [cta {:value "Buy now!"}]]))
+```
+
+Here `cta` is a shorthand for writing the full Ornament class name of the
+component. Now the `cta` button will get some extra padding in this context, in
+addition to its red background.
+
+You can also use `cta` as a reusable group of styles. In this case we wont to
+style the `:a` element with the `cta` styles.
+
+```clojure
+(o/defstyled pricing-link :span
+  [:a cta]
+  ([]
+   [:a {:href "/pricing"} "Pricing"]))
+```
+
+This kind of referencing previously defined components works both in Clojure and
+ClojureScript, even though in ClojureScript usage you can't normally reference
+vars inside your style declaration. To make these work we resolve these symbols
+during compilation based on Ornament's registry of components.
 
 ### Garden Extensions
 
