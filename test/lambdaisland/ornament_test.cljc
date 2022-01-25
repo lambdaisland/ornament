@@ -40,9 +40,6 @@
    ^{:datetime (str date " " time)}
    [:<> date " " time]))
 
-(o/defstyled simple :span
-  {:color "#ffffff"})
-
 (o/defstyled ornament-in-ornament :div
   {:color "blue"}
   [simple {:color "red"}])
@@ -169,7 +166,18 @@
     "<span class=\"ot__simple ot__timed\"></span>"
 
     [with-body "hello"]
-    "<p class=\"ot__with_body\"><strong>hello</strong></p>"))
+    "<p class=\"ot__with_body\"><strong>hello</strong></p>"
+
+    ;; ClojureScript bug, this does not currently work:
+    ;; https://ask.clojure.org/index.php/11514/functions-with-metadata-can-not-take-more-than-20-arguments
+    #_#_
+    [simple
+     [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a]
+     [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a]
+     [:a] [:a] [:a] [:a]]
+    "<span class=\"ot__simple\"><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a></span>"
+
+    ))
 
 (o/defstyled custok1 :div
   :bg-primary)
@@ -243,9 +251,9 @@
      (o/set-tokens! {:colors ^:replace {:primary "001122"}
                      :fonts ^:replace {:system "-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji"}})
 
-     ;; The built-in ones are all gone
-     (is (nil? (o/process-rule :bg-red-500)))
-     (is (nil? (o/process-rule :font-mono)))
+     ;; The built-in ones are all gone, they expand to selectors now
+     (is (= :bg-red-500 (o/process-rule :bg-red-500)))
+     (is (= :font-mono (o/process-rule :font-mono)))
 
      (is {:--gi-bg-opacity 1, :background-color "rgba(0,17,34,var(--gi-bg-opacity))"}
          (o/process-rule :bg-primary))
@@ -262,7 +270,7 @@
      (is (= {:display "inline-flex", :align-items "center"}
             (o/process-rule :full-center)))
 
-     (is (nil? (o/process-rule :rounded-xl)))
+     (is (= :rounded-xl (o/process-rule :rounded-xl)))
 
      ;; Reset to defaults
      (o/set-tokens! {})))
@@ -285,27 +293,3 @@
               (o/defined-styles)))
 
        (reset! o/registry reg))))
-
-
-(o/defstyled list-wrapper :div
-  [:ul :ol {:background-color "blue"}])
-
-(o/css list-wrapper)
-;; => ".ot__list_wrapper ul,.ot__list_wrapper ol{background-color:blue}"
-
-;; ✔️ :bg-blue-500 is recognized as a utility class
-
-(o/defstyled list-wrapper :div
-  [:ul :bg-blue-500])
-
-(o/css list-wrapper)
-;; => ".ot__list_wrapper ul{--gi-bg-opacity:1;background-color:rgba(59,130,246,var(--gi-bg-opacity))}"
-
-
-(o/defstyled fig-wrapper :div
-  [#{:figure :table} {:padding "1rem"}])
-
-(o/css fig-wrapper)
-;; => ".ot__fig_wrapper figure,.ot__fig_wrapper table{padding:1rem}"
-
-;; => ".ot__fig_wrapper figure{display:table;padding:1rem}"
