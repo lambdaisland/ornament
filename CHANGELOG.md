@@ -1,14 +1,10 @@
 # Unreleased
 
-## Added
-
 ## Fixed
 
-## Changed
+- Improve ClojureScript support, in particular referencing components in other components style rules
 
 # 0.2.19 (2021-11-29 / 6c8e226)
-
-## Added
 
 ## Fixed
 
