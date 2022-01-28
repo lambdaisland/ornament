@@ -18,3 +18,6 @@
     (reset! portal-instance p)
     (add-tap (jit portal.api/submit))
     p))
+
+(defn clerk! []
+  ((jit 'nextjournal.clerk/serve!) {:watch-paths ["notebooks"]}))

@@ -8,7 +8,8 @@
  :aliases
  {:dev
   {:extra-paths ["dev"]
-   :extra-deps  {djblue/portal {:mvn/version "RELEASE"}}}
+   :extra-deps  {djblue/portal {:mvn/version "RELEASE"}
+                 io.github.nextjournal/clerk {:mvn/version "0.5.346"}}}
 
   :byo
   {:extra-deps {hawk/hawk {:mvn/version "0.2.11"}

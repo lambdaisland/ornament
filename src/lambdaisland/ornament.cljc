@@ -50,7 +50,7 @@
   (component [_]
     "Function which is a Hiccup component, for styled components which have one or more function tails.")
   (as-hiccup [_ args]
-    "Render to hiccup"))
+   "Render to hiccup"))
 
 (declare process-rule)
 
@@ -319,6 +319,9 @@
   names."
   [classes class]
   (cond
+    (sequential? class)
+    (reduce add-class classes class)
+
     (string? classes)
     [class classes]
 
@@ -331,6 +334,24 @@
     :else
     [(str class)]))
 
+(defn merge-prop [k v1 v2]
+  (case k
+    :class (add-class v2 v1)
+    :style (if (:replace (meta v2))
+             v2
+             (merge v1 v2))
+    v2))
+
+(defn merge-props [p1 p2]
+  (when (or p1 p2)
+    (let [merge-entry (fn [m e]
+			(let [k (key e)
+                              v (val e)]
+			  (if (contains? m k)
+			    (assoc m k (merge-prop k (get m k) v))
+			    (assoc m k v))))]
+      (reduce merge-entry (or p1 {}) p2))))
+
 (defn expand-hiccup-tag
   "Handle expanding/rendering the component to Hiccup
 
@@ -342,12 +363,23 @@
         attrs (when attr-map? (first args))
         children (if attr-map? (next args) args)]
     (if component
-      (let [child (apply component args)]
+      (let [child (apply component args)
+            chattrs? (and (vector? child)
+                          (= :<> (first child))
+                          (map? (second child)))
+            attrs (cond->
+                      ;; Legacy, allow specifying props with metadata, prefer [:<> {..props...}]
+                      (if chattrs? (second child) {})
+                    (meta child)
+                    (merge-props (meta child))
+                    attrs
+                    (merge-props attrs))]
         (expand-hiccup-tag tag
                            css-class
-                           [(into (or (meta child) {})
-                                  (select-keys attrs [:id :class :style]))
-                            child]
+                           [(or attrs {})
+                            (if chattrs?
+                              (into [:<>] (nnext child))
+                              child)]
                            nil))
       (into [tag (update attrs :class add-class css-class)] children))))
 

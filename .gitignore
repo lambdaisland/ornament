@@ -14,3 +14,4 @@ out
 .#*
 package.json
 package-lock.json
+.clerk
