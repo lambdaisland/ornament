@@ -584,7 +584,10 @@
        ;; the component with the appropriate classes, it has no knowledge of the
        ;; actual styles, which are expected to be rendered on the backend or
        ;; during compilation.
-       `(def ~(with-meta sym {::css true :ornament (dissoc (get @registry varsym) :component)})
+       `(def ~(with-meta sym (assoc
+                               (meta sym)
+                               ::css true
+                               :ornament (dissoc (get @registry varsym) :component)))
           (styled '~varsym
                   ~css-class
                   ~tag
