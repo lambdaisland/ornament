@@ -11,12 +11,23 @@
 
 ;; Let's take a simple button component
 
-(o/defstyled button :button
-  :border-1 :border-black
-  :p-2 :m-1 :rounded
-  [:&:disabled
-   :border-gray-400
-   :text-gray-400])
+(o/defstyled button0 :button
+  :border-1 :border-black :p-2 :m-1 :rounded
+  [:&:disabled :border-gray-400 :text-gray-400])
+
+(o/defstyled input-field :div
+  :table-row
+  [:label :table-cell :w-1]
+  [:input :table-cell :w-full]
+  ([opts caption]
+   [:<>
+    [:label {:for (:id opts)} caption]
+    [:input opts]]))
+
+(o/defstyled button1 :button
+  :border-1 :border-black :p-2 :m-1 :rounded
+  [:&:disabled :border-gray-400 :text-gray-400]
+  ([]))
 
 (o/as-garden button)
 (o/css button)
@@ -58,13 +69,10 @@
 ;; signal that you want to set attributes on the outer element (the button). You
 ;; can think of the caret as pointing "upwards" to the component itself.
 
-(o/defstyled button3 :button
+(o/defstyled button :button
   :p-2 :m-1 :border-1
-  :border-black :text-gray-800 :rounded
-  [:&:disabled :border-gray-400 :text-gray-400]
-  ([]
-   ^{:disabled "disabled"}
-   [:<> "Send!"]))
+  ([{:keys [disabled? caption]}]
+   [:<> {:disabled disabled?} caption]))
 
 (html [button3])
 

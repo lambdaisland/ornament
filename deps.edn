@@ -9,7 +9,7 @@
  {:dev
   {:extra-paths ["dev"]
    :extra-deps  {djblue/portal {:mvn/version "RELEASE"}
-                 io.github.nextjournal/clerk {:mvn/version "0.5.346"}}}
+                 io.github.nextjournal/clerk {:mvn/version "RELEASE"}}}
 
   :byo
   {:extra-deps {hawk/hawk {:mvn/version "0.2.11"}

@@ -20,4 +20,4 @@
     p))
 
 (defn clerk! []
-  ((jit 'nextjournal.clerk/serve!) {:watch-paths ["notebooks"]}))
+  ((jit nextjournal.clerk/serve!) {:watch-paths ["notebooks"]}))
