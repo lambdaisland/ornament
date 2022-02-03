@@ -3,7 +3,7 @@ name: Continuous Delivery
 on: push
 
 jobs:
-  test:
+  Kaocha:
     runs-on: ${{matrix.sys.os}}
 
     strategy:
@@ -46,7 +46,7 @@ jobs:
         run: bin/kaocha clj
 
 
-  static-build:
+  Clerk:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
