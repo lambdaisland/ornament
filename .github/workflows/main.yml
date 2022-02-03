@@ -80,7 +80,7 @@ jobs:
           key: ${{ runner.os }}-clerk-cache
 
       - name: 🏗 Build Clerk Static App with default Notebooks
-        run: clojure -X:dev nextjournal.clerk/build-static-app! :git/sha '"${{ github.sha }}"' :git/url '"https://github.com/lambdaisland/ornament"'
+        run: clojure -A:dev:test:byo -M -m build-notebooks '${{ github.sha }}'
 
       - name: 🔐 Google Auth
         uses: google-github-actions/auth@v0

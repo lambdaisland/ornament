@@ -3,14 +3,16 @@
             [nextjournal.clerk :as clerk]
             [lambdaisland.hiccup :as hiccup]))
 
+;; # A Small Demonstration of Ornament
+
 ;; Helper to render components:
 
 (defn render [h]
   (clerk/html (hiccup/render h {:doctype? false})))
 
-;; A relatively simple component, but leaning into the fact that we can organize
-;; our styles however we like, including splitting things up and adding
-;; comments.
+;; A relatively simple component, using Girouette (Tailwind-style) styling, and
+;; leaning into the fact that we can organize our styles however we like,
+;; including splitting things up and adding comments.
 
 (o/defstyled navbar :nav
   ;; layout
