@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html><head><title>Clerk</title><meta charset="UTF-8"><meta content="width=device-width, initial-scale=1" name="viewport"><script src="https://cdn.tailwindcss.com?plugins=typography" type="text/javascript"></script><script>tailwind.config = {
+  content: ["./public/build/index.html", "./public/build/**/*.html", "./build/viewer.js"],
+  theme: {
+    extend: {},
+    fontFamily: {
+      sans: ["Fira Sans", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+      serif: ["PT Serif", "serif"],
+      mono: ["Fira Mono", "monospace"]
+    }
+  },
+  variants: {
+    extend: {},
+  },
+  plugins: [],
+}
+</script><style type="text/tailwindcss">@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 18px;
+  }
+  @media (max-width: 600px) {
+    html {
+      font-size: 16px;
+    }
+  }
+  .font-condensed { font-family: "Fira Sans Condensed", sans-serif; }
+  .font-inter     { font-family: "Inter", sans-serif; }
+  body {
+    @apply font-serif antialiased text-gray-900 sm:overscroll-y-none;
+  }
+  code, .code {
+    @apply font-mono text-sm text-gray-900 bg-slate-50 px-0.5 py-px rounded;
+  }
+  code::before, code::after { @apply content-none !important; }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-condensed font-bold mt-8 first:mt-0;
+  }
+  h1 { @apply text-4xl; }
+  h2 { @apply text-3xl; }
+  h3 { @apply text-2xl; }
+  h4 { @apply text-xl; }
+  h5 { @apply text-lg; }
+  h6 { @apply text-base; }
+
+  button { @apply focus:outline-none; }
+  strong { @apply font-bold; }
+  em     { @apply italic; }
+  pre    { @apply m-0 font-mono; }
+}
+
+/* Compatibility */
+/* --------------------------------------------------------------- */
+/* TODO: Verify which colors are in use and replace with Tailwind
+   colors accordingly. Move Nj-specific styles out of here. */
+
+:root {
+  --teal-color: #31afd0;
+  --dark-teal-color: #095960;
+  --near-black-color: #2e2e2c;
+  --red-color: #d64242;
+  --dark-blue-color: #1f2937;
+  --dark-blue-60-color: rgba(28, 42, 56, 0.6);
+  --gray-panel-color: rgba(239, 241, 245, 1.000);
+  --brand-color: var(--dark-blue-color);
+  --link-color: #5046e4;
+  --command-bar-selected-color: var(--teal-color);
+}
+
+.serif      { @apply font-serif; }
+.sans-serif { @apply font-sans; }
+.monospace  { @apply font-mono; }
+.inter      { @apply font-inter; }
+
+.border-color-teal { border-color: var(--dark-teal-color); }
+.teal { color: var(--teal-color); }
+.bg-dark-blue { background: var(--dark-blue-color); }
+.bg-dark-blue-60 { background: rgba(28, 42, 56, 0.6); }
+.bg-gray-panel { background: var(--gray-panel-color); }
+.text-dark-blue  { color: var(--dark-blue-color); }
+.text-dark-blue-60 { color: var(--dark-blue-60-color); }
+.border-dark-blue-30 { border-color: rgba(28, 42, 56, 0.6); }
+.text-brand { color: var(--dark-blue-color); }
+.bg-brand { background: var(--dark-blue-color); }
+.text-selected { color: white; }
+.red { color: var(--red-color); }
+
+/* Disclose Button */
+/* --------------------------------------------------------------- */
+
+.disclose {
+  @apply content-none border-solid cursor-pointer inline-block relative mr-[3px] top-[-2px] transition-all;
+  border-color: var(--near-black-color) transparent;
+  border-width: 6px 4px 0;
+}
+.disclose:hover {
+  border-color: var(--near-black-color) transparent;
+}
+.disclose.collapsed {
+  @apply rotate-[-90deg];
+}
+
+/* Layout */
+/* --------------------------------------------------------------- */
+
+.page {
+  @apply max-w-5xl mx-auto px-12 box-border flex-shrink-0;
+}
+.toc-content {
+  @apply translate-x-[-110%] opacity-0;
+}
+.toc:hover .toc-content,
+.toc.pinned .toc-content {
+  @apply translate-x-0 opacity-100;
+}
+.max-w-prose { @apply max-w-[46rem] !important; }
+.max-w-wide  { @apply max-w-3xl !important; }
+
+/* List Styles */
+/* --------------------------------------------------------------- */
+
+.task-list-item + .task-list-item,
+.viewer-markdown ul .task-list-item ul {
+  @apply mt-1;
+}
+
+/* Code Viewer */
+/* --------------------------------------------------------------- */
+
+.viewer-code {
+  @apply font-mono bg-slate-100 rounded-sm py-4 px-8 text-sm mt-4 overflow-x-auto;
+}
+@media (min-width: 960px){
+  .viewer-notebook .viewer-code {
+    @apply py-4 pl-12;
+  }
+}
+/* Don’t show focus outline when double-clicking cell in Safari */
+.cm-scroller { @apply focus:outline-none; }
+
+/* Data Viewer */
+/* --------------------------------------------------------------- */
+
+.inspected-value { @apply text-xs font-mono; }
+
+.syntax-tag, .cm-number, .syntax-number, .cm-string, .syntax-string,
+.cm-atom, .syntax-keyword, .cm-builtin, .cm-keyword, .syntax-symbol,
+.syntax-bool, .syntax-nil, .syntax-untyped, .syntax-key, .syntax-index {
+  @apply font-mono;
+}
+
+.syntax-tag     { @apply text-pink-900 !important; }
+.cm-number      { @apply text-sky-900 !important; }
+.syntax-number  { @apply text-sky-900 !important; }
+.cm-string      { @apply text-teal-700 !important; }
+.syntax-string  { @apply text-teal-700 !important; }
+.cm-atom        { @apply text-sky-900 !important; }
+.syntax-keyword { @apply text-sky-900 !important; }
+.cm-builtin     { @apply text-pink-900 !important; }
+.cm-keyword     { @apply text-pink-900 !important; }
+.syntax-symbol  { @apply text-pink-900 !important; }
+.syntax-bool    { @apply text-sky-900 !important; }
+.syntax-nil     { @apply text-sky-900 !important; }
+.syntax-untyped { @apply text-rose-500 !important; }
+.syntax-key     { @apply text-fuchsia-900 !important; }
+.syntax-index   { @apply text-fuchsia-900 !important; }
+
+.syntax-untyped { @apply whitespace-nowrap; }
+
+.result-data {
+  @apply font-mono text-sm overflow-x-auto whitespace-nowrap leading-normal;
+}
+.result-data::-webkit-scrollbar, .path-nav::-webkit-scrollbar {
+  @apply h-0;
+}
+.result-data-collapsed {
+  @apply whitespace-nowrap;
+}
+.result-data-field {
+  @apply ml-4 whitespace-nowrap;
+}
+.result-data-field-link{
+  @apply ml-4 whitespace-nowrap cursor-pointer;
+}
+.result-data-field-link:hover {
+  @apply text-black bg-black/5;
+}
+.result-text-empty {
+  color: rgba(0,0,0,.3);
+}
+.browsify-button:hover {
+  box-shadow: -2px 0 0 2px #edf2f7;
+}
+
+/* Prose */
+/* --------------------------------------------------------------- */
+
+.viewer-notebook,
+.viewer-markdown {
+  @apply prose
+    prose-a:text-indigo-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
+    prose-p:mt-4 prose-p:leading-snug
+    prose-ol:mt-4 prose-ol:mb-6 prose-ol:leading-snug
+    prose-ul:mt-4 prose-ul:mb-6 prose-ul:leading-snug
+    prose-blockquote:mt-4 prose-blockquote:leading-snug
+    prose-hr:mt-6 prose-hr:border-t-2 prose-hr:border-solid prose-hr:border-slate-200
+    prose-figure:mt-4
+    prose-figcaption:mt-2 prose-figcaption:text-xs
+    prose-headings:mb-6
+    prose-th:mb-0
+    prose-img:mb-0
+    max-w-none;
+}
+.viewer-markdown li > p {
+  @apply inline;
+}
+
+/* Todo Lists */
+/* --------------------------------------------------------------- */
+
+.contains-task-list {
+  @apply pl-6 list-none;
+}
+.contains-task-list li p {
+  @apply inline m-0;
+}
+.contains-task-list input[type="checkbox"] {
+  @apply appearance-none h-4 w-4 rounded border border-slate-200 relative mr-[0.3rem] ml-[-1.5rem] top-[0.15rem];
+}
+.contains-task-list input[type="checkbox"]:checked {
+  @apply border-indigo-600 bg-indigo-600 bg-no-repeat bg-contain;
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
+
+/* Markdown TOC */
+/* --------------------------------------------------------------- */
+
+.viewer-markdown .toc      { @apply mt-4; }
+.viewer-markdown h1 + .toc { @apply mt-8; }
+
+.viewer-markdown .toc h1,
+.viewer-markdown .toc h2,
+.viewer-markdown .toc h3,
+.viewer-markdown .toc h4,
+.viewer-markdown .toc h5,
+.viewer-markdown .toc h6 {
+  @apply text-base text-indigo-600 font-sans my-0;
+}
+.viewer-markdown .toc a {
+  @apply text-indigo-600 font-normal no-underline hover:underline;
+}
+.viewer-markdown .toc li    { @apply m-0; }
+.viewer-markdown .toc ul ul { @apply pl-4; }
+
+/* Notebook Spacing */
+/* --------------------------------------------------------------- */
+
+.viewer-notebook { @apply py-16; }
+.viewer-markdown *:first-child:not(.viewer-code) { @apply mt-0; }
+.viewer + .viewer { @apply mt-6; }
+.viewer-markdown + .viewer { @apply mt-3; }
+.viewer-markdown + .viewer-markdown { @apply mt-0; }
+
+/* Sidenotes */
+/* --------------------------------------------------------------- */
+
+.sidenote-ref {
+  @apply top-[-3px] inline-flex justify-center items-center w-[18px] h-[18px]
+    rounded-full bg-slate-100 border border-slate-300 hover:bg-slate-200 hover:border-slate-300
+    m-0 ml-[4px] cursor-pointer;
+}
+.sidenote {
+  @apply hidden float-left clear-both mx-[2.5%] my-4 text-xs relative w-[95%];
+}
+.sidenote-ref.expanded + .sidenote {
+  @apply block;
+}
+@media (min-width: 860px) {
+  .sidenote-ref {
+    @apply top-[-0.5em] w-auto h-auto inline border-0 bg-transparent m-0 pointer-events-none;
+  }
+  .sidenote sup { @apply inline; }
+  .viewer-markdown .contains-sidenotes p { @apply max-w-[65%]; }
+  .viewer-markdown p .sidenote {
+    @apply mr-[-54%] mt-[0.2rem] w-1/2 float-right clear-right relative block;
+  }
+}
+.viewer-code + .viewer:not(.viewer-markdown):not(.viewer-code):not(.viewer-code-folded),
+.viewer-code-folded + .viewer:not(.viewer-markdown):not(.viewer-code):not(.viewer-code-folded),
+.viewer-result + .viewer-result {
+  @apply mt-2;
+}
+@media (min-width: 768px) {
+  .devcard-desc > div {
+    @apply max-w-full m-0;
+  }
+}
+
+/* Command Palette */
+/* --------------------------------------------------------------- */
+
+.nj-commands-input {
+  @apply bg-transparent text-white;
+}
+.nj-context-menu-item:hover:not([disabled]) {
+  @apply cursor-pointer;
+  background-color: rgba(255,255,255,.14);
+}
+
+/* Devdocs */
+/* --------------------------------------------------------------- */
+
+.collapsed-sidebar:not(.mobile-sidebar) .sidebar-content {
+  @apply transition-all duration-200 ml-[-360px] opacity-0;
+}
+.collapsed-sidebar:hover:not(.mobile-sidebar) .sidebar-content {
+  @apply ml-0 opacity-100;
+}
+.logo, .logo-white {
+  @apply block indent-[-999em];
+  background: url(/images/nextjournal-logo.svg) center center no-repeat;
+}
+.devdocs-body {
+  @apply font-inter;
+}
+
+/* Workarounds */
+/* --------------------------------------------------------------- */
+
+/* Fixes vega viewer resizing into infinity */
+.vega-embed .chart-wrapper { @apply h-auto !important; }
+/* fixes fraction separators being overridden by tw’s border-color */
+.katex * { @apply border-black; }
+</style><script src="https://storage.googleapis.com/nextjournal-cas-eu/data/8VtrAyT1tkNwAPZyFu4amwY7s9rMteumpHLJUHWj4hhaAn7NxQnM1u9C5r9p37ZaEJ656h6Dh7NxGgHU6ztkNqEsnQ" type="text/javascript"></script><link href="https://cdn.jsdelivr.net/npm/katex@0.13.13/dist/katex.min.css" rel="stylesheet" type="text/css"><link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&amp;family=Fira+Mono:wght@400;700&amp;family=Fira+Sans+Condensed:ital,wght@0,700;1,700&amp;family=Fira+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&amp;family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap" rel="stylesheet" type="text/css"></head><body><div id="clerk-static-app"></div><script>let viewer = nextjournal.clerk.sci_viewer
+let app = nextjournal.clerk.static_app
+let opts = viewer.read_string("{:paths [#object[java.io.File 0x724517d6 \"notebooks/parse_from_html.clj\"] #object[java.io.File 0x78adde26 \"notebooks/tailwind_ui_preview.clj\"] #object[java.io.File 0x4e3ca69 \"notebooks/html_attrs.clj\"]], :bundle? false, :path-prefix \"\", :git/sha \"sha123\", :git/url \"https://github.com/lambdaisland/ornament\", :path->doc {#object[java.io.File 0x78adde26 \"notebooks/tailwind_ui_preview.clj\"] {:nextjournal/value {:blocks [{:nextjournal/value \"(ns notebooks.tailwind-ui-preview\\n  (:require [nextjournal.clerk :ac clerk]\\n            [lambdaisland.ornament :as o]\\n            [lambdaisland.hiccup :as h]))\", :nextjournal/viewer :code} {:nextjournal/viewer :clerk/result, :nextjournal/value {:nextjournal/edn \"{:path [], :nextjournal/value nil, :nextjournal/viewer {:render-fn #viewer-fn (fn [_] (v/html [:span.syntax-nil.inspected-value \\\"nil\\\"]))}}\"}, :path []} {:nextjournal/value \"(def html (comp nextjournal.clerk/html h/render))\", :nextjournal/viewer :code} {:nextjournal/viewer :clerk/result, :nextjournal/value {:nextjournal/edn \"{:path [], :nextjournal/value \\\"ojure.core$comp$fn__5825 0x65f72647 \\\\\\\"clojure.core$comp$fn__5825@65f72647\\\\\\\"\\\", :nextjournal/viewer {:name :fn, :render-fn #viewer-fn (fn [x] (v/html [:span.inspected-value [:span.syntax-tag \\\"#function\\\"] \\\"[\\\" x \\\"]\\\"]))}}\", :nextjournal/viewer {:name :fn}}, :path []} {:nextjournal/value \"(o/defstyled\\n  ^{:doc \\\"Taken from\\nhttps://tailwindcomponents.com/component/tailwind-card-portfolio\\\"}\\n  portfolio-card :div\\n  :flex :items-center :justify-center\\n  :h-screen :bg-gradient-to-br\\n  :from-indigo-500 :to-indigo-800\\n  [:>div :bg-white :font-semibold :text-center :rounded-3xl\\n   :border :shadow-lg :p-10 :max-w-xs]\\n  [:img :mb-3 :w-32 :h-32 :rounded-full :shadow-lg :mx-auto]\\n  [:h1 :text-lg :text-gray-700]\\n  [:h3 :text-sm :text-gray-400]\\n  [:p :text-xs :text-gray-400 :mt-4]\\n  [:button :bg-indigo-600 :px-8 :py-2 :mt-8 :rounded-3xl\\n   :text-gray-100 :font-semibold :uppercase :tracking-wide]\\n  ([{:keys [name image title bio button-text]}]\\n   [:div\\n    [:div\\n     [:img {:src image :alt name}]\\n     [:h1 name]\\n     [:h3 title]\\n     [:p bio]\\n     [:button button-text]]]))\", :nextjournal/viewer :code} {:nextjournal/viewer :clerk/result, :nextjournal/value {:nextjournal/edn \"{:path [], :nextjournal/value notebooks_tailwind-ui-preview__portfolio_card, :nextjournal/viewer {:render-fn #viewer-fn (fn [x] (v/html [:span.syntax-symbol.inspected-value x]))}}\"}, :path []} {:nextjournal/value \"(html\\n [portfolio-card {:name \\\"Arne Brasseur\\\"\\n                  :title \\\"Technological Maestro\\\"\\n                  :image \\\"https://pbs.twimg.com/profile_images/1330134972750041092/Q7_zfpmq_400x400.jpg\\\"\\n                  :bio \\\"Turning tea into Sexps\\\"\\n                  :button-text \\\"Get in touch!\\\"}])\", :nextjournal/viewer :code} {:nextjournal/viewer :clerk/result, :nextjournal/value {:nextjournal/edn \"{:path [], :nextjournal/value \\\"<!DOCTYPE html>\\\\n\\\", :nextjournal/viewer {:name :html, :render-fn #viewer-fn v/html}}\", :nextjournal/viewer {:name :html}}, :path []} {:nextjournal/value \" (o/defstyled mark-external-links :div\\n   [\\\"a[href*=\\\\\\\"//\\\\\\\"]:not([href*=\\\\\\\"mysite.com\\\\\\\"]):after\\\"\\n    {:content \\\"\\\\\\\" ↗️\\\\\\\"\\\"}])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (html\\n  [mark-external-links\\n   [:p \\\"We love \\\"\\n    [:a {:href \\\"https://en.wikipedia.org/wiki/Clojure\\\"} \\\"Clojure\\\"]]])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (html\\n  [:p {:class [mark-external-links]} \\\"We love \\\"\\n   [:a {:href \\\"https://en.wikipedia.org/wiki/Clojure\\\"} \\\"Clojure\\\"]])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (o/defstyled my-para :p\\n   [:div\\n    mark-external-links])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (html\\n  [my-para \\\"We love \\\"\\n   [:a {:href \\\"https://en.wikipedia.org/wiki/Clojure\\\"} \\\"Clojure\\\"]])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (o/css my-para)\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" ;; https://tailwindcomponents.com/component/footer-with-newsletter\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (def svg-heart\\n   [:svg\\n    {:fill \\\"#e53e3e\\\", :viewbox \\\"0 0 24 24\\\", :stroke \\\"currentColor\\\"}\\n    [:path\\n     {:stroke-linecap \\\"round\\\",\\n      :stroke-linejoin \\\"round\\\",\\n      :stroke-width \\\"2\\\",\\n      :d\\n      \\\"M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z\\\"}]])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (def svg-fb\\n   [:svg\\n    {:viewbox \\\"0 0 512 512\\\"}\\n    [:path\\n     {:d\\n      \\\"M455.27,32H56.73A24.74,24.74,0,0,0,32,56.73V455.27A24.74,24.74,0,0,0,56.73,480H256V304H202.45V240H256V189c0-57.86,40.13-89.36,91.82-89.36,24.73,0,51.33,1.86,57.51,2.68v60.43H364.15c-28.12,0-33.48,13.3-33.48,32.9V240h67l-8.75,64H330.67V480h124.6A24.74,24.74,0,0,0,480,455.27V56.73A24.74,24.74,0,0,0,455.27,32Z\\\"}]])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (def svg-email\\n   [:svg\\n    {:fill \\\"none\\\", :viewbox \\\"0 0 24 24\\\", :stroke \\\"currentColor\\\"}\\n    [:path\\n     {:stroke-linecap \\\"round\\\",\\n      :stroke-linejoin \\\"round\\\",\\n      :stroke-width \\\"2\\\",\\n      :d\\n      \\\"M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z\\\"}]])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (def svg-linkedin\\n   [:svg\\n    {:viewbox \\\"0 0 512 512\\\"}\\n    [:path\\n     {:d\\n      \\\"M444.17,32H70.28C49.85,32,32,46.7,32,66.89V441.61C32,461.91,49.85,480,70.28,480H444.06C464.6,480,480,461.79,480,441.61V66.89C480.12,46.7,464.6,32,444.17,32ZM170.87,405.43H106.69V205.88h64.18ZM141,175.54h-.46c-20.54,0-33.84-15.29-33.84-34.43,0-19.49,13.65-34.42,34.65-34.42s33.85,14.82,34.31,34.42C175.65,160.25,162.35,175.54,141,175.54ZM405.43,405.43H341.25V296.32c0-26.14-9.34-44-32.56-44-17.74,0-28.24,12-32.91,23.69-1.75,4.2-2.22,9.92-2.22,15.76V405.43H209.38V205.88h64.18v27.77c9.34-13.3,23.93-32.44,57.88-32.44,42.13,0,74,27.77,74,87.64Z\\\"}]])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (def svg-twitter\\n   [:svg\\n    {:viewbox \\\"0 0 512 512\\\"}\\n    [:path\\n     {:d\\n      \\\"M496,109.5a201.8,201.8,0,0,1-56.55,15.3,97.51,97.51,0,0,0,43.33-53.6,197.74,197.74,0,0,1-62.56,23.5A99.14,99.14,0,0,0,348.31,64c-54.42,0-98.46,43.4-98.46,96.9a93.21,93.21,0,0,0,2.54,22.1,280.7,280.7,0,0,1-203-101.3A95.69,95.69,0,0,0,36,130.4C36,164,53.53,193.7,80,211.1A97.5,97.5,0,0,1,35.22,199v1.2c0,47,34,86.1,79,95a100.76,100.76,0,0,1-25.94,3.4,94.38,94.38,0,0,1-18.51-1.8c12.51,38.5,48.92,66.5,92.05,67.3A199.59,199.59,0,0,1,39.5,405.6,203,203,0,0,1,16,404.2,278.68,278.68,0,0,0,166.74,448c181.36,0,280.44-147.7,280.44-275.8,0-4.2-.11-8.4-.31-12.5A198.48,198.48,0,0,0,496,109.5Z\\\"}]])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (o/defstyled footer-with-newsletter :footer\\n   :bg-gray-300 :w-full :py-6 :px-4 :my-32\\n   [:div.top :px-4 :pt-3 :pb-4 :border-b :-mx-4 :border-gray-400\\n    [:>div :max-w-xl :mx-auto\\n     [:>h2 :text-xl :text-left :inline-block :font-semibold :text-gray-800]\\n     [:>p :text-gray-700 :text-xs :pl-px]\\n     [:>form :mt-2\\n      [:>div :flex :items-center\\n       [:>input :w-full :px-2 :py-4 :mr-2 :bg-gray-100 :shadow-inner :rounded-md :border :border-gray-400 :focus:outline-none]\\n       [:>button :bg-blue-600 :text-gray-200 :px-5 :py-2 :rounded :shadow]]]]]\\n   [:div.bottom :flex :items-center :justify-between :my-4\\n    [:.rights-reserved :text-blue-500]\\n    [:.author :inline-flex :text-blue-500 :px-2 :pt-6\\n     [:>svg :w-5 :h-5 :mx-1 :pt-px :text-red-600]]\\n    [:>div :flex :items-center\\n     [:>a [:>svg :h-6 :w-6 :text-blue-600 :mr-6]]\\n     [:.fill :fill-current]]]\\n   ([]\\n    [:<>\\n     [:div.top\\n      [:div\\n       [:h2 \\\"Join Our Newsletter\\\"]\\n       [:p \\\"Latest news ,articles and updates montly delevered to your inbox.\\\"]\\n       [:form {:action \\\"#\\\"}\\n        [:div\\n         [:input {:type \\\"email\\\", :required \\\"required\\\"}]\\n         [:button {:style \\\"margin-left: -7.8rem;\\\"} \\\"Sign Up\\\"]]]]]\\n     [:div.bottom\\n      [:p.rights-reserved \\\"All rights reserved\\\"]\\n      [:p.author \\\"Built with\\\" svg-heart \\\"by Mohammed Ibrahim(Jermine Junior).\\\"]\\n      [:div\\n       [:a.fill {:href \\\"#\\\"} svg-fb]\\n       [:a {:href \\\"#\\\"} svg-email]\\n       [:a.fill {:href \\\"#\\\"} svg-linkedin]\\n       [:a.fill {:href \\\"#\\\"} svg-twitter]]]]))\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (html [footer-with-newsletter])\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" ;; https://tailwindui.com/components/application-ui/application-shells/stacked\\n ;; Needs disambiguating of siblings\\n (o/defstyled stacked-layouts :div\\n   :min-h-full\\n   [:>nav :bg-gray-800\\n    [:>div :max-w-7xl :mx-auto :px-4 :sm:px-6 :lg:px-8\\n     [:>div :flex :items-center :justify-between :h-16\\n      [:>div :flex :items-center\\n       [:>div :flex-shrink-0 [:>img :h-8 :w-8]]\\n       [:>div :hidden :md:block\\n        [:>div :ml-10 :flex :items-baseline :space-x-4\\n         [:>a :bg-gray-900 :text-white :px-3 :py-2 :rounded-md :text-sm :font-medium]\\n         [:>a :text-gray-300 :hover:bg-gray-700 :hover:text-white :px-3 :py-2 :rounded-md :text-sm :font-medium]]]]\\n      [:>div :hidden :md:block\\n       [:>div :ml-4 :flex :items-center :md:ml-6\\n        [:>button :bg-gray-800 :p-1 :rounded-full :text-gray-400 :hover:text-white :focus:outline-none :focus:ring-2 :focus:ring-offset-2 :focus:ring-offset-gray-800 :focus:ring-white\\n         [:>span :sr-only]\\n         [:>svg :h-6 :w-6]]\\n        [:>div :ml-3 :relative\\n         [:>div\\n          [:>button :max-w-xs :bg-gray-800 :rounded-full :flex :items-center :text-sm :focus:outline-none :focus:ring-2 :focus:ring-offset-2 :focus:ring-offset-gray-800 :focus:ring-white\\n           [:>span :sr-only]\\n           [:>img :h-8 :w-8 :rounded-full]]]\\n         [:>div :origin-top-right :absolute :right-0 :mt-2 :w-48 :rounded-md :shadow-lg :py-1 :bg-white :ring-1 :ring-black :ring-opacity-5 :focus:outline-none\\n          [:>a :block :px-4 :py-2 :text-sm :text-gray-700]]]]]\\n      [:>div :-mr-2 :flex :md:hidden\\n       [:>button :bg-gray-800 :inline-flex :items-center :justify-center :p-2 :rounded-md :text-gray-400 :hover:text-white :hover:bg-gray-700 :focus:outline-none :focus:ring-2 :focus:ring-offset-2 :focus:ring-offset-gray-800 :focus:ring-white\\n        [:>span :sr-only]\\n        [:>svg :block :h-6 :w-6]\\n        [:>svg :hidden :h-6 :w-6]]]]]\\n    [:>div :md:hidden\\n     [:>div :px-2 :pt-2 :pb-3 :space-y-1 :sm:px-3\\n      [:>a :bg-gray-900 :text-white :block :px-3 :py-2 :rounded-md :text-base :font-medium]\\n      [:>a :text-gray-300 :hover:bg-gray-700 :hover:text-white :block :px-3 :py-2 :rounded-md :text-base :font-medium]]\\n     [:>div :pt-4 :pb-3 :border-t :border-gray-700\\n      [:>div :flex :items-center :px-5\\n       [:>div :flex-shrink-0 [:>img :h-10 :w-10 :rounded-full]]\\n       [:>div :ml-3\\n        [:>div :text-base :font-medium :leading-none :text-white]\\n        [:>div :text-sm :font-medium :leading-none :text-gray-400]]\\n       [:>button :ml-auto :bg-gray-800 :flex-shrink-0 :p-1 :rounded-full :text-gray-400 :hover:text-white :focus:outline-none :focus:ring-2 :focus:ring-offset-2 :focus:ring-offset-gray-800 :focus:ring-white\\n        [:>span :sr-only]\\n        [:>svg :h-6 :w-6]]]\\n      [:>div :mt-3 :px-2 :space-y-1\\n       [:>a :block :px-3 :py-2 :rounded-md :text-base :font-medium :text-gray-400 :hover:text-white :hover:bg-gray-700]]]]]\\n   [:>header :bg-white :shadow\\n    [:>div :max-w-7xl :mx-auto :py-6 :px-4 :sm:px-6 :lg:px-8\\n     [:>h1 :text-3xl :font-bold :text-gray-900]]]\\n   [:>main\\n    [:>div :max-w-7xl :mx-auto :py-6 :sm:px-6 :lg:px-8\\n     [:>div :px-4 :py-6 :sm:px-0\\n      [:>div :border-4 :border-dashed :border-gray-200 :rounded-lg :h-96]]]]\\n   ([]\\n    [:<>\\n     [:nav\\n      [:div\\n       [:div\\n        [:div\\n         [:div\\n          [:img\\n           {:src \\\"https://tailwindui.com/img/logos/workflow-mark-indigo-500.svg\\\",\\n            :alt \\\"Workflow\\\"}]]\\n         [:div\\n          [:div\\n           [:a {:href \\\"#\\\", :aria-current \\\"page\\\"} \\\"Dashboard\\\"]\\n           [:a {:href \\\"#\\\"} \\\"Team\\\"]\\n           [:a {:href \\\"#\\\"} \\\"Projects\\\"]\\n           [:a {:href \\\"#\\\"} \\\"Calendar\\\"]\\n           [:a {:href \\\"#\\\"} \\\"Reports\\\"]]]]\\n        [:div\\n         [:div\\n          [:button\\n           {:type \\\"button\\\"}\\n           [:span \\\"View notifications\\\"]\\n           [:svg\\n            {:fill \\\"none\\\",\\n             :viewbox \\\"0 0 24 24\\\",\\n             :stroke \\\"currentColor\\\",\\n             :aria-hidden \\\"true\\\"}\\n            [:path\\n             {:stroke-linecap \\\"round\\\",\\n              :stroke-linejoin \\\"round\\\",\\n              :stroke-width \\\"2\\\",\\n              :d\\n              \\\"M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9\\\"}]]]\\n          [:div\\n           [:div\\n            [:button\\n             {:type \\\"button\\\",\\n              :id \\\"user-menu-button\\\",\\n              :aria-expanded \\\"false\\\",\\n              :aria-haspopup \\\"true\\\"}\\n             [:span \\\"Open user menu\\\"]\\n             [:img\\n              {:src\\n               \\\"https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80\\\",\\n               :alt \\\"\\\"}]]]\\n           [:div\\n            {:role \\\"menu\\\",\\n             :aria-orientation \\\"vertical\\\",\\n             :aria-labelledby \\\"user-menu-button\\\",\\n             :tabindex \\\"-1\\\"}\\n            [:a\\n             {:href \\\"#\\\",\\n              :role \\\"menuitem\\\",\\n              :tabindex \\\"-1\\\",\\n              :id \\\"user-menu-item-0\\\"}\\n             \\\"Your Profile\\\"]\\n            [:a\\n             {:href \\\"#\\\",\\n              :role \\\"menuitem\\\",\\n              :tabindex \\\"-1\\\",\\n              :id \\\"user-menu-item-1\\\"}\\n             \\\"Settings\\\"]\\n            [:a\\n             {:href \\\"#\\\",\\n              :role \\\"menuitem\\\",\\n              :tabindex \\\"-1\\\",\\n              :id \\\"user-menu-item-2\\\"}\\n             \\\"Sign out\\\"]]]]]\\n        [:div\\n         [:button\\n          {:type \\\"button\\\", :aria-controls \\\"mobile-menu\\\", :aria-expanded \\\"false\\\"}\\n          [:span \\\"Open main menu\\\"]\\n          [:svg\\n           {:fill \\\"none\\\",\\n            :viewbox \\\"0 0 24 24\\\",\\n            :stroke \\\"currentColor\\\",\\n            :aria-hidden \\\"true\\\"}\\n           [:path\\n            {:stroke-linecap \\\"round\\\",\\n             :stroke-linejoin \\\"round\\\",\\n             :stroke-width \\\"2\\\",\\n             :d \\\"M4 6h16M4 12h16M4 18h16\\\"}]]\\n          [:svg\\n           {:fill \\\"none\\\",\\n            :viewbox \\\"0 0 24 24\\\",\\n            :stroke \\\"currentColor\\\",\\n            :aria-hidden \\\"true\\\"}\\n           [:path\\n            {:stroke-linecap \\\"round\\\",\\n             :stroke-linejoin \\\"round\\\",\\n             :stroke-width \\\"2\\\",\\n             :d \\\"M6 18L18 6M6 6l12 12\\\"}]]]]]]\\n      [:div\\n       {:id \\\"mobile-menu\\\"}\\n       [:div\\n        [:a {:href \\\"#\\\", :aria-current \\\"page\\\"} \\\"Dashboard\\\"]\\n        [:a {:href \\\"#\\\"} \\\"Team\\\"]\\n        [:a {:href \\\"#\\\"} \\\"Projects\\\"]\\n        [:a {:href \\\"#\\\"} \\\"Calendar\\\"]\\n        [:a {:href \\\"#\\\"} \\\"Reports\\\"]]\\n       [:div\\n        [:div\\n         [:div\\n          [:img\\n           {:src\\n            \\\"https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80\\\",\\n            :alt \\\"\\\"}]]\\n         [:div [:div \\\"Tom Cook\\\"] [:div \\\"tom@example.com\\\"]]\\n         [:button\\n          {:type \\\"button\\\"}\\n          [:span \\\"View notifications\\\"]\\n          [:svg\\n           {:fill \\\"none\\\",\\n            :viewbox \\\"0 0 24 24\\\",\\n            :stroke \\\"currentColor\\\",\\n            :aria-hidden \\\"true\\\"}\\n           [:path\\n            {:stroke-linecap \\\"round\\\",\\n             :stroke-linejoin \\\"round\\\",\\n             :stroke-width \\\"2\\\",\\n             :d\\n             \\\"M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9\\\"}]]]]\\n        [:div\\n         [:a {:href \\\"#\\\"} \\\"Your Profile\\\"]\\n         [:a {:href \\\"#\\\"} \\\"Settings\\\"]\\n         [:a {:href \\\"#\\\"} \\\"Sign out\\\"]]]]]\\n     [:header [:div [:h1 \\\"Dashboard\\\"]]]\\n     [:main [:div [:div [:div]]]]]))\\n\", :nextjournal/viewer :markdown} {:nextjournal/value \" (html\\n  [stacked-layouts])\\n ^{:nextjournal.clerk/no-cache true\\n   :nextjournal.clerk/visibility :hide}\\n (html\\n  [:style (o/defined-styles)])\\n\", :nextjournal/viewer :markdown}]}, :nextjournal/viewer :clerk/notebook, :scope {:namespace :notebooks.tailwind-ui-preview}}}, :path->url {#object[java.io.File 0x724517d6 \"notebooks/parse_from_html.clj\"] \"notebooks/parse_from_html.html\", #object[java.io.File 0x78adde26 \"notebooks/tailwind_ui_preview.clj\"] \"notebooks/tailwind_ui_preview.html\", #object[java.io.File 0x4e3ca69 \"notebooks/html_attrs.clj\"] \"notebooks/html_attrs.html\"}, :current-path #object[java.io.File 0x78adde26 \"notebooks/tailwind_ui_preview.clj\"]}")
+app.init(opts)
+</script></body></html>

@@ -37,8 +37,30 @@
   :border
   :border-black
   ([{:keys [date time]}]
+   ;; Legacy, prefer syntax below
    ^{:datetime (str date " " time)}
    [:<> date " " time]))
+
+(o/defstyled timed-with-attrs :time
+  :border
+  :border-black
+  ([{:keys [date time]}]
+   ;; New way of doing it, add a props/attrs map to :<>
+   [:<> {:datetime (str date " " time)} date " " time]))
+
+;; Contrived example to test that attrs merge properly. Attrs passed in to the
+;; hiccup have precendence over those in the metadata, have precedence over
+;; those in the :<> markup. Note that you should never have to use both like we
+;; do here, the meta support is superseded by the :<> props support.
+(o/defstyled attr-precedence :div
+  ([& _]
+   ^{:class ["m1" "m2"]
+     :style {:color "blue"}
+     :id "meta"}
+   [:<> {:class ["p1" "p2"]
+         :style {:color "red"}
+         :id "props-map"}
+    "hello"]))
 
 (o/defstyled ornament-in-ornament :div
   {:color "blue"}
@@ -157,7 +179,10 @@
     "<span class=\"ot__simple xxx\" style=\"border-bottom: 1px solid black;\"><strong>child</strong></span>"
 
     [timed {:date "2021-06-25" :time "10:11:12"}]
-    "<time datetime=\"2021-06-25 10:11:12\" class=\"ot__timed\">2021-06-25 10:11:12</time>"
+    "<time datetime=\"2021-06-25 10:11:12\" date=\"2021-06-25\" time=\"10:11:12\" class=\"ot__timed\">2021-06-25 10:11:12</time>"
+
+    [timed-with-attrs {:date "2021-06-25" :time "10:11:12"}]
+    "<time datetime=\"2021-06-25 10:11:12\" date=\"2021-06-25\" time=\"10:11:12\" class=\"ot__timed_with_attrs\">2021-06-25 10:11:12</time>"
 
     [simple {:class timed}]
     "<span class=\"ot__simple ot__timed\"></span>"
@@ -167,6 +192,22 @@
 
     [with-body "hello"]
     "<p class=\"ot__with_body\"><strong>hello</strong></p>"
+
+    ;; Note that the order in which classes stack up can be a bit unexpected,
+    ;; and is more a side-effect of the implementation than any sort of
+    ;; interface guarantee. The order of classes on an element does not
+    ;; influence how the CSS is rendered, only the order in which they show up
+    ;; in the CSS matters.
+    [attr-precedence {:class ["h1" "h2"]
+                      :style {:color "green"}
+                      :id "top"}]
+    "<div class=\"ot__attr_precedence m2 m1 p1 p2 h1 h2\" style=\"color: green;\" id=\"top\">hello</div>"
+
+    [attr-precedence]
+    "<div class=\"ot__attr_precedence p2 p1 m1 m2\" style=\"color: blue;\" id=\"meta\">hello</div>"
+
+    [attr-precedence {:style {:padding "1rem"}}]
+    "<div class=\"ot__attr_precedence p2 p1 m1 m2\" style=\"color: blue;\n  padding: 1rem;\" id=\"meta\">hello</div>"
 
     ;; ClojureScript bug, this does not currently work:
     ;; https://ask.clojure.org/index.php/11514/functions-with-metadata-can-not-take-more-than-20-arguments
