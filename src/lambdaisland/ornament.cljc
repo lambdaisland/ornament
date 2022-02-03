@@ -271,8 +271,8 @@
          (let [girouette-garden (class-name->garden (name rule))]
            (cond
              (nil? girouette-garden)
-             #_(throw (ex-info "Girouette style expansion failed" {:rule rule}))
-             rule
+             (throw (ex-info "Girouette style expansion failed" {:rule rule}))
+             #_rule
 
              (and (record? girouette-garden)
                   (= (:identifier girouette-garden) :media))

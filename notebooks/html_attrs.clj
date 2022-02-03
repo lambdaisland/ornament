@@ -27,20 +27,20 @@
 (o/defstyled button1 :button
   :border-1 :border-black :p-2 :m-1 :rounded
   [:&:disabled :border-gray-400 :text-gray-400]
-  ([]))
+  )
 
-(o/as-garden button)
-(o/css button)
+;; (o/as-garden button1)
+;; (o/css button1)
 
 ;; This is what it looks like
 
-(html [button  "Click me"])
+(html [button1  "Click me"])
 
 ;; It's basically just an alias for a HTML element, so we can give it an
 ;; attributes map and children.
 
-(html [button {:type "submit"
-               :disabled "disabled"}
+(html [button1 {:type "submit"
+                :disabled "disabled"}
        "Click me"])
 
 ;; Now suppose we actually have some inner markup for this button that we want
@@ -69,11 +69,12 @@
 ;; signal that you want to set attributes on the outer element (the button). You
 ;; can think of the caret as pointing "upwards" to the component itself.
 
-(o/defstyled button :button
+(o/defstyled button3 :button
   :p-2 :m-1 :border-1
   ([{:keys [disabled? caption]}]
    [:<> {:disabled disabled?} caption]))
 
+#_
 (html [button3])
 
 ;; And you can take an attribute map as an argument, and then pass that through,
