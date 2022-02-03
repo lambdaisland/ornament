@@ -50,7 +50,9 @@ component". It combines a name, a HTML tag, and styling rules.
 ```
 
 This does two things, first of all it creates a Hiccup component, which combines
-the tag (`:a` in this case), with a class name based on the component name.
+the tag (`:a` in this case), with a class name based on the component name. (See
+the section on "Choosing a Hiccup Implementation" for more info on where this
+syntax is supported.)
 
 ```clojure
 ;; Hiccup
@@ -110,6 +112,74 @@ the syntax and features of `defstyled` in detail down below. But first we need
 to explain Ornament's philosophy on how to deal with CSS, to give you accurate
 expectations of how it will behave. This is especially relevant for
 ClojureScript projects.
+
+## Choosing a Hiccup Implementation
+
+Representing HTML using nested Clojure vectors is an approach that was
+popularized by the [Hiccup](https://github.com/weavejester/hiccup) library, and
+so this is referred to as Hiccup-syntax. Since then many other libaries have
+implemented this same syntax, sometimes with small changes or extensions.
+
+A particular extension popularized by
+[Reagent](https://github.com/reagent-project/reagent) is the use of functions as
+components. You define functions which return hiccup, and use those functions in
+your hiccup where normally you would have a keyword denoting a HTML element tag.
+In essence you're no longer calling the function yourself (with parentheses) but
+telling Reagent to call it while rendering.
+
+```clj
+(def my-component [arg]
+  [:p "in my component:" arg])
+  
+(reagent-dom/render [my-component "hello"] (js/document.getElementById "app"))
+```
+
+This has significance in React-apps because it allows React/Reagent to manage
+the component, but we like it in general to make it clear that something is
+conceptually a hiccup component.
+
+Ornament components are basically the same, they are (or behave like) functions
+which return Hiccup. If the implementation you are using supports putting them
+in square brackets then you can go with that, or you can just call them yourself
+as a function.
+
+```clj
+(o/defstyled my-component :p
+  :m-3)
+
+;; option 1
+[my-component "hello"]
+
+;; option 2
+[my-component "hello"]
+```
+
+How do different Hiccup implementations differ?
+
+- Clojure vs ClojureScript (or both with cljc)
+- Support functions as components
+- Automatically HTML-escape text (the ones that support this all have different ways of injecting "raw" html strings)
+- Support for `:<>` (fragments)
+- Have the style property be a map (instead of just a string)
+- Pre-compile via macros for better performance
+
+Some that we know of:
+
+Clojure:
+
+- Hiccup 1, beware: does not auto-escape text and so is sensitive to CSRF attacks
+- Hiccup 2, fixes the security issue and is generally the better option, despite officially being in alpha
+- Enlive (See `net.cgrand.enlive-html/html`)
+- [lambdaisland.hiccup](https://github.com/lambdaisland/hiccup) is our take on
+  this, it is based on Enlive, but adds functions-as-component, fragments,
+  styles-as-maps, and a convenient syntax for raw html strings
+- Hicada (cljc, macro-based)
+
+ClojureScript
+
+- Reagent and other React wrappers
+- Sablono
+- Hicada
 
 ## Ornament CSS Compilation
 
