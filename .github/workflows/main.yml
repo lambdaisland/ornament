@@ -46,7 +46,7 @@ jobs:
         run: bin/kaocha clj
 
 
-  Clerk build:
+  Clerk-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
