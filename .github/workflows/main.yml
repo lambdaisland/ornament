@@ -42,8 +42,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
+      - name: Install chrome
+        uses: browser-actions/setup-chrome@latest
+        with:
+          run: chrome --version
+
       - name: 🧪 Run tests
-        run: bin/kaocha
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: bin/kaocha
 
 
   static-build:
