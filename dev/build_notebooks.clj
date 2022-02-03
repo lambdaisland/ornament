@@ -10,7 +10,7 @@
                 (remove (memfn ^java.io.File isDirectory))
                 (map str))
     :bundle? false
-    :path-prefix (str "ornament/sha/" sha)
+    :path-prefix (str "ornament/sha/" sha "/")
     :git/sha sha
     :git/url "https://github.com/lambdaisland/ornament"
     :browse? false}))
