@@ -4,7 +4,7 @@
   `(requiring-resolve '~sym))
 
 (defn browse []
-  ((jit clojure.java.browse/browse-url) "http://localhost:8000"))
+  ((jit clojure.java.browse/browse-url) "http://localhost:7777"))
 
 (def portal-instance (atom nil))
 
@@ -18,3 +18,6 @@
     (reset! portal-instance p)
     (add-tap (jit portal.api/submit))
     p))
+
+(defn clerk! []
+  ((jit nextjournal.clerk/serve!) {:watch-paths ["notebooks"]}))

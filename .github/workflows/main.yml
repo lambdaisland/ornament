@@ -1,0 +1,106 @@
+name: Continuous Delivery
+
+on: push
+
+jobs:
+  test:
+    runs-on: ${{matrix.sys.os}}
+
+    strategy:
+      matrix:
+        sys:
+          # - { os: macos-latest, shell: bash }
+          - { os: ubuntu-latest, shell: bash }
+          # - { os: windows-latest, shell: powershell }
+
+    defaults:
+      run:
+        shell: ${{matrix.sys.shell}}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch_depth: 0
+
+      - name: 🔧 Install java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11.0.7'
+
+      - name: 🔧 Install clojure
+        uses: DeLaGuardo/setup-clojure@master
+        with:
+          cli: '1.10.3.943'
+
+      - name: 🗝 maven cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2
+            ~/.gitlibs
+          key: ${{ runner.os }}-maven-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: 🧪 Run tests
+        run: bin/kaocha clj
+
+
+  static-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch_depth: 0
+
+      - name: 🔧 Install java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11.0.7'
+
+      - name: 🔧 Install clojure
+        uses: DeLaGuardo/setup-clojure@master
+        with:
+          cli: '1.10.3.943'
+
+      - name: 🗝 maven cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2
+            ~/.gitlibs
+          key: ${{ runner.os }}-maven-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: 🗝 Clerk Cache
+        uses: actions/cache@v2
+        with:
+          path: .clerk
+          key: ${{ runner.os }}-clerk-cache
+
+      - name: 🏗 Build Clerk Static App with default Notebooks
+        run: clojure -A:dev:test:byo -M -m build-notebooks '${{ github.sha }}'
+
+      - name: 🔐 Google Auth
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY_JSON }}
+
+      - name: 🔧 Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.3.0
+
+      - name: 📠 Copy static build to bucket under SHA
+        run: |
+          gsutil cp -r public/build gs://lambdaisland-notebooks/ornament/sha/${{ github.sha }}
+
+      - name: ✅ Add success status to report with link to snapshot
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: 'Static App'
+          description: 'Ready'
+          state: 'success'
+          sha: ${{github.event.pull_request.head.sha || github.sha}}
+          target_url: https://storage.googleapis.com/lambdaisland-notebooks/ornament/sha/${{ github.sha }}
+          #https://notebooks.lambdaisland.com/ornament/sha/${{ github.sha }}
