@@ -102,5 +102,4 @@ jobs:
           description: 'Ready'
           state: 'success'
           sha: ${{github.event.pull_request.head.sha || github.sha}}
-          target_url: https://storage.googleapis.com/lambdaisland-notebooks/ornament/sha/${{ github.sha }}
-          #https://notebooks.lambdaisland.com/ornament/sha/${{ github.sha }}
+          target_url: https://notebooks.lambdaisland.com/ornament/sha/${{ github.sha }}
