@@ -43,7 +43,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: 🧪 Run tests
-        run: clojure -X:test
+        run: bin/kaocha
 
 
   static-build:
