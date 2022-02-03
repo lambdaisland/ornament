@@ -2,4 +2,7 @@
 
 [[ -d node_modules ]] || npm install ws
 
+ls -l node_modules
+node --version
+
 clojure -M:test -m kaocha.runner "$@"
