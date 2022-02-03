@@ -151,7 +151,7 @@ as a function.
 [my-component "hello"]
 
 ;; option 2
-[my-component "hello"]
+(my-component "hello")
 ```
 
 How do different Hiccup implementations differ?
