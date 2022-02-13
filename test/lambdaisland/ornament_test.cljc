@@ -282,14 +282,19 @@
 
        ;; Deal with the fact that the registry is populated at compile time
        (eval
-        `(o/defstyled ~'my-styles :div
-           {:color "red"}))
+        `(do
+           (in-ns '~(symbol (namespace `_)))
+           (o/defstyled ~'my-styles :div
+             {:color "red"})
+           (o/defstyled ~'more-styles :span
+             :rounded-xl)))
 
-       (eval
-        `(o/defstyled ~'more-styles :span
-           :rounded-xl))
-
-       (is (= ".user__my_styles{color:red}\n.user__more_styles{border-radius:.75rem}"
+       (is (= ".ot__my_styles{color:red}\n.ot__more_styles{border-radius:.75rem}"
               (o/defined-styles)))
 
        (reset! o/registry reg))))
+
+(comment
+  (require 'kaocha.repl)
+  (kaocha.repl/run)
+  )
