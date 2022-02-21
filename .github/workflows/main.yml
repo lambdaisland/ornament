@@ -93,6 +93,7 @@ jobs:
       - name: 📠 Copy static build to bucket under SHA
         run: |
           gsutil cp -r public/build gs://lambdaisland-notebooks/ornament/sha/${{ github.sha }}
+          gsutil cp -r public/build gs://lambdaisland-notebooks/ornament/branch/${{ github.ref_name }}
 
       - name: ✅ Add success status to report with link to snapshot
         uses: Sibz/github-status-action@v1
