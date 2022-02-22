@@ -128,7 +128,7 @@ In essence you're no longer calling the function yourself (with parentheses) but
 telling Reagent to call it while rendering.
 
 ```clj
-(def my-component [arg]
+(defn my-component [arg]
   [:p "in my component:" arg])
   
 (reagent-dom/render [my-component "hello"] (js/document.getElementById "app"))
@@ -489,7 +489,7 @@ Here `cta` is a shorthand for writing the full Ornament class name of the
 component. Now the `cta` button will get some extra padding in this context, in
 addition to its red background.
 
-You can also use `cta` as a reusable group of styles. In this case we wont to
+You can also use `cta` as a reusable group of styles. In this case we want to
 style the `:a` element with the `cta` styles.
 
 ```clojure
@@ -556,7 +556,7 @@ use that map to pass arbitrary values to the render function. So we lift out
 ```
 
 ```clojure
-[videos {:videos (fetch-videos} :id "main-listing"}]
+[videos {:videos (fetch-videos) :id "main-listing"}]
 ```
 
 It is still possible to set extra HTML attributes on the component in this case,
