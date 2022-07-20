@@ -65,9 +65,9 @@
        (atom nil))
 
      (def default-tokens
-       {:components girouette-default/default-components
-        :colors     girouette-color/default-color-map
-        :fonts      girouette-typography/default-font-family-map})
+       {:components girouette-default/all-tw-components
+        :colors     girouette-color/tw-v2-colors
+        :fonts      girouette-typography/tw-v2-font-family-map})
 
      (defn set-tokens!
        "Set \"design tokens\": colors, fonts, and components
@@ -126,7 +126,7 @@
      (defonce set-default-tokens (set-tokens! nil))
 
      (defn class-name->garden [n]
-       ((:class-name->garden @girouette-api) n))
+       ((:tw-v2-class-name->garden @girouette-api) n))
 
      (defmethod print-method ::styled [x writer]
        (.write writer (classname x)))
@@ -633,7 +633,7 @@
                              (map (fn [{:keys [var tag rules classname]}]
                                     (css (styled var classname tag rules nil)))))]
        (cond->> registry-css
-         preflight? (into [(gc/compile-css girouette-preflight/preflight)])
+         preflight? (into [(gc/compile-css girouette-preflight/preflight-v2_0_3)])
          :always (str/join "\n")))))
 
 #?(:clj

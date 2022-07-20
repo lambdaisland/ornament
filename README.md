@@ -297,7 +297,7 @@ will then hot-reload.
          ;; style rules between the preflight and the components. This whole bit
          ;; is optional.
          (gc/compile-css (concat
-                          girouette-preflight/preflight
+                          girouette-preflight/preflight-v2_0_3
                           styles/global-styles))
          "\n"
          (o/defined-styles)))
