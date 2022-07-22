@@ -116,6 +116,12 @@
          :style {:color "blue"}}
     "hello, " person]))
 
+(o/defstyled attrs-legacy :div
+  ([{:keys [person]}]
+   ^{:class "extra-class"
+     :style {:color "blue"}}
+   [:<> "hello, " person]))
+
 #?(:clj
    (deftest css-test
      (is (= ".ot__simple{color:#fff}"
@@ -210,6 +216,9 @@
                                           :style {:background-color "rebeccapurple"}}}]
     #?(:clj "<div class=\"ot__attrs_in_fragment_styled extra-class extra2\" style=\"color: blue;\n  background-color: rebeccapurple;\">hello, Finn</div>"
        :cljs "<div class=\"ot__attrs_in_fragment_styled extra-class extra2\" style=\"color: blue; background-color: rebeccapurple;\">hello, Finn</div>")
+
+    [attrs-legacy {:person "Arne"}]
+    "<div class=\"ot__attrs_legacy extra-class\" style=\"color: blue;\">hello, Arne</div>"
 
     ;; ClojureScript bug, this does not currently work:
     ;; https://ask.clojure.org/index.php/11514/functions-with-metadata-can-not-take-more-than-20-arguments

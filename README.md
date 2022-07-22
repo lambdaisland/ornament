@@ -537,31 +537,39 @@ when using in Hiccup: the first argument, if it's a map, is treated as a map of
 HTML attributes, any following arguments are treated as children.
 
 When you supply your own render function this behavior changes. All arguments
-are passed to the render function to determine the children of the styled
-component. If the first argument is a map, then the `:class`, `:id`, and
+are passed to the render function, which then determines the element's
+attributes and children.
+
+To set custom attributes on the outer element from inside the render function,
+you use a properties map together with a fragment `:<>` identifier:
+
+```clojure
+(o/defstyled my-compo :div
+ ([props]
+  [:<> {:title "hello"} "hello!"]))
+```
+
+If you pass a `:class` here it will get added to the class that Ornament
+generates for the component.
+
+When using a component that has a custom render function, you can set attributes
+by using the special `:lambdaisland.ornament/attrs` keyword.
+
+```clojure
+[my-compo {:regular-prop 123 ::o/attrs {:title "heyo"}}]
+```
+
+Any `:class` or `:style` attributes passed in this way will be added to any
+classes or styles set inside the render function with `:<>`.
+
+In previous versions we supported `:class`, `:id` and `:style` at the top of the
+properties map, but that's no longer the case.
+
+If the first argument is a map, then the `:class`, `:id`, and
 `:style` elements are added to the outer component (they are still passed to the
 render function as well).
 
-The rationale is that when using a styled component in your Hiccup, it should be
-straightforward to add an extra class or inline styling to the component. We
-don't want to break that use case. But we don't want to treat the map in the
-first argument as only consisting of HTML attributes in this case, since you may
-use that map to pass arbitrary values to the render function. So we lift out
-`:class`, `:id` and `:style`, and ignore the rest.
-
-```clojure
-(o/defstyled videos :section
-  ([{:keys [videos]}]
-   (into [:<>] (map #(do [video %]) videos))))
-```
-
-```clojure
-[videos {:videos (fetch-videos} :id "main-listing"}]
-```
-
-It is still possible to set extra HTML attributes on the component in this case,
-but it has to be done from *inside the render function*, through metadata on the
-return value.
+There's an additional mechanis for setting attributes from inside the render-function, through metadata on the return value, but it is considered deprecated, since it's superseded by `[:<> {,,,attrs,,,}]`.
 
 ```clojure
 (o/defstyled nav-link :a

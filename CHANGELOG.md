@@ -2,9 +2,7 @@
 
 ## Added
 
-## Fixed
-
-## Changed
+- Support attributes when using a top-level fragment in a rendering function
 
 # 0.4.34 (2022-01-25 / df056c8)
 
