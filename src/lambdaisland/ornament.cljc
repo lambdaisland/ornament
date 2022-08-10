@@ -1,18 +1,19 @@
 (ns lambdaisland.ornament
   "CSS-in-clj(s)"
   (:require [clojure.string :as str]
-            #?@(:clj [[clojure.walk :as walk]
-                      [garden.compiler :as gc]
-                      [garden.core :as garden]
-                      [garden.color :as gcolor]
-                      [garden.types :as gt]
-                      [garden.stylesheet :as gs]
-                      [girouette.tw.core :as girouette]
-                      [girouette.tw.preflight :as girouette-preflight]
-                      [girouette.tw.typography :as girouette-typography]
-                      [girouette.tw.color :as girouette-color]
-                      [girouette.tw.default-api :as girouette-default]
-                      [meta-merge.core :as meta-merge]]))
+            [meta-merge.core :as meta-merge]
+            #?@(:clj
+                [[clojure.walk :as walk]
+                 [garden.compiler :as gc]
+                 [garden.core :as garden]
+                 [garden.color :as gcolor]
+                 [garden.types :as gt]
+                 [garden.stylesheet :as gs]
+                 [girouette.tw.core :as girouette]
+                 [girouette.tw.preflight :as girouette-preflight]
+                 [girouette.tw.typography :as girouette-typography]
+                 [girouette.tw.color :as girouette-color]
+                 [girouette.tw.default-api :as girouette-default]]))
   #?(:cljs
      (:require-macros [lambdaisland.ornament :refer [defstyled]])))
 
@@ -319,6 +320,9 @@
   names."
   [classes class]
   (cond
+    (sequential? class)
+    (reduce add-class classes class)
+
     (string? classes)
     [class classes]
 
@@ -331,25 +335,76 @@
     :else
     [(str class)]))
 
+;; vocab note: we call "attributes" the key-value pairs you can supply to a HTML
+;; element, like `class`, `style`, or `href`. We call "properties" the map you
+;; pass as the first child to a Ornament/Hiccup component. For component that
+;; don't have a custom render functions these properties will be used as
+;; attributes. For components that do have a custom render function it depends
+;; on what the render function does. In this case you can still pass in
+;; attributes directly using the special `:lambdaisland.ornament/attrs`
+;; property.
+;; See also the Attributes and Properties notebook.
+
+(defn merge-attr
+  "Logic for merging two attribute values for the same key.
+  - `class` : append the classname(s)
+  - `style` : merge the right style map into the left"
+  [k v1 v2]
+  (case k
+    :class (if (and (vector? v2) (:replace (meta v2)))
+             v2
+             (add-class v2 v1))
+    :style (if (or (not (and (map? v1) (map? v2)))
+                   (:replace (meta v2)))
+             v2
+             (merge v1 v2))
+    v2))
+
+(defn merge-attrs
+  "Combine attribute maps"
+  ([p1 p2]
+   (when (or p1 p2)
+     (let [merge-entry (fn [m e]
+			 (let [k (key e)
+                               v (val e)]
+			   (if (contains? m k)
+			     (assoc m k (merge-attr k (get m k) v))
+			     (assoc m k v))))]
+       (reduce merge-entry (or p1 {}) p2))))
+  ([p1 p2 & ps]
+   (reduce merge-attrs (merge-attrs p1 p2) ps)))
+
+(defn attr-add-class [attrs class]
+  (update attrs :class add-class class))
+
+(defn expand-hiccup-tag-simple
+  "Expand an ornament component being called directly with child elements, without
+  custom render function."
+  [tag css-class children extra-attrs]
+  (if (sequential? children)
+    (as-> children $
+      (if (= :<> (first $)) (next $) $)
+      (if (vector? $) (list $) $)
+      (if (map? (first $))
+        (into [tag (attr-add-class
+                    (merge-attrs (first $) (meta children) extra-attrs)
+                    css-class)] (next $))
+        (into [tag (attr-add-class
+                    (merge-attrs (meta children) extra-attrs)
+                    css-class)] $)))
+    [tag (attr-add-class extra-attrs css-class) children]))
+
 (defn expand-hiccup-tag
   "Handle expanding/rendering the component to Hiccup
 
   For plain [[defstyled]] components this simply adds the CSS class name. For
-  components with a function tail this handles calling it, and handles setting
-  attributes on the resulting element via metadata on the result."
+  components with a render function this handles the expansion, and also handles
+  fragments (`:<>`), optionally with an attributes map, and handles merging
+  attributes passed in via the `::attrs` property."
   [tag css-class args component]
-  (let [attr-map? (map? (first args))
-        attrs (when attr-map? (first args))
-        children (if attr-map? (next args) args)]
-    (if component
-      (let [child (apply component args)]
-        (expand-hiccup-tag tag
-                           css-class
-                           [(into (or (meta child) {})
-                                  (select-keys attrs [:id :class :style]))
-                            child]
-                           nil))
-      (into [tag (update attrs :class add-class css-class)] children))))
+  (if component
+    (expand-hiccup-tag-simple tag css-class (apply component args) (::attrs (first args)))
+    (expand-hiccup-tag-simple tag css-class args nil)))
 
 (defn styled
   ([varsym css-class tag rules component]

@@ -2,7 +2,7 @@
 
  :deps
  {garden/garden         {:mvn/version "1.3.10"}
-  girouette/girouette   {:mvn/version "0.0.6"}
+  girouette/girouette   {:mvn/version "0.0.7"}
   meta-merge/meta-merge {:mvn/version "1.0.0"}}
 
  :aliases
@@ -25,7 +25,7 @@
                  com.lambdaisland/glogi {:mvn/version "1.1.144"}
                  ;; for lambdaisland.hiccup and lambdaisland.thicc, used in testing
                  lambdaisland/webstuff {:git/url "https://github.com/lambdaisland/webstuff"
-                                        :git/sha "fc4e2b7e41dd4e3db9a2778b9c69d92148d0549c"
+                                        :git/sha "5d5669e7f7829c65fdd00b19ef826565ce41b7ea"
                                         #_#_:local/root "/home/arne/github/lambdaisland/webstuff"}}}
 
   :cssparser

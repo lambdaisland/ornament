@@ -100,6 +100,28 @@
   ;; Girouette recognizes.
   [:ul :ol {:background-color "blue"}])
 
+(o/defstyled attrs-in-fragment :div
+  ([children]
+   [:<> {:lang "nl"}
+    children]))
+
+(o/defstyled attrs-in-fragment-props :div
+  ([{:keys [person]}]
+   [:<> {:lang "nl"}
+    "hello, " person]))
+
+(o/defstyled attrs-in-fragment-styled :div
+  ([{:keys [person]}]
+   [:<> {:class "extra-class"
+         :style {:color "blue"}}
+    "hello, " person]))
+
+(o/defstyled attrs-legacy :div
+  ([{:keys [person]}]
+   ^{:class "extra-class"
+     :style {:color "blue"}}
+   [:<> "hello, " person]))
+
 #?(:clj
    (deftest css-test
      (is (= ".ot__simple{color:#fff}"
@@ -142,6 +164,7 @@
      (is (= ".ot__siblings_plain ul,.ot__siblings_plain ol{background-color:blue}"
             (o/css siblings-plain)))))
 
+
 (deftest rendering-test
   (are [hiccup html] (= html (render hiccup))
     [simple]
@@ -167,6 +190,35 @@
 
     [with-body "hello"]
     "<p class=\"ot__with_body\"><strong>hello</strong></p>"
+
+    ;; we're getting inconsistent but equivalent rendering here between clj and
+    ;; cljs. Not ideal, but not a big deal either. Working around with reader
+    ;; conditionals.
+    [attrs-in-fragment "hello"]
+    #?(:clj "<div lang=\"nl\" class=\"ot__attrs_in_fragment\">hello</div>"
+       :cljs "<div class=\"ot__attrs_in_fragment\" lang=\"nl\">hello</div>")
+
+    [attrs-in-fragment-props
+     {:person "Arne"
+      ::o/attrs {:lang "en" :title "greeting"}}]
+    #?(:clj "<div lang=\"en\" title=\"greeting\" class=\"ot__attrs_in_fragment_props\">hello, Arne</div>"
+       :cljs "<div title=\"greeting\" class=\"ot__attrs_in_fragment_props\" lang=\"en\">hello, Arne</div>")
+
+    [attrs-in-fragment-props {:person "Jake"}]
+    #?(:clj "<div lang=\"nl\" class=\"ot__attrs_in_fragment_props\">hello, Jake</div>"
+       :cljs "<div class=\"ot__attrs_in_fragment_props\" lang=\"nl\">hello, Jake</div>")
+
+    [attrs-in-fragment-styled {:person "Finn"}]
+    "<div class=\"ot__attrs_in_fragment_styled extra-class\" style=\"color: blue;\">hello, Finn</div>"
+
+    [attrs-in-fragment-styled {:person "Finn"
+                               ::o/attrs {:class "extra2"
+                                          :style {:background-color "rebeccapurple"}}}]
+    #?(:clj "<div class=\"ot__attrs_in_fragment_styled extra-class extra2\" style=\"color: blue;\n  background-color: rebeccapurple;\">hello, Finn</div>"
+       :cljs "<div class=\"ot__attrs_in_fragment_styled extra-class extra2\" style=\"color: blue; background-color: rebeccapurple;\">hello, Finn</div>")
+
+    [attrs-legacy {:person "Arne"}]
+    "<div class=\"ot__attrs_legacy extra-class\" style=\"color: blue;\">hello, Arne</div>"
 
     ;; ClojureScript bug, this does not currently work:
     ;; https://ask.clojure.org/index.php/11514/functions-with-metadata-can-not-take-more-than-20-arguments
@@ -282,14 +334,19 @@
 
        ;; Deal with the fact that the registry is populated at compile time
        (eval
-        `(o/defstyled ~'my-styles :div
-           {:color "red"}))
+        `(do
+           (in-ns '~(symbol (namespace `_)))
+           (o/defstyled ~'my-styles :div
+             {:color "red"})
+           (o/defstyled ~'more-styles :span
+             :rounded-xl)))
 
-       (eval
-        `(o/defstyled ~'more-styles :span
-           :rounded-xl))
-
-       (is (= ".user__my_styles{color:red}\n.user__more_styles{border-radius:.75rem}"
+       (is (= ".ot__my_styles{color:red}\n.ot__more_styles{border-radius:.75rem}"
               (o/defined-styles)))
 
        (reset! o/registry reg))))
+
+(comment
+  (require 'kaocha.repl)
+  (kaocha.repl/run)
+  )
