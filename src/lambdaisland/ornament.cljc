@@ -1,7 +1,7 @@
 (ns lambdaisland.ornament
   "CSS-in-clj(s)"
   (:require [clojure.string :as str]
-            [meta-merge.core :as meta-merge])
+            [meta-merge.core :as meta-merge]
             #?@(:clj [[clojure.walk :as walk]
                       [garden.compiler :as gc]
                       [garden.core :as garden]
@@ -13,8 +13,7 @@
                       [girouette.tw.preflight :as girouette-preflight]
                       [girouette.tw.typography :as girouette-typography]
                       [girouette.tw.color :as girouette-color]
-                      [girouette.tw.default-api :as girouette-default]
-                      ])
+                      [girouette.tw.default-api :as girouette-default]]))
   #?(:cljs
      (:require-macros [lambdaisland.ornament :refer [defstyled]])))
 
