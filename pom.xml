@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.lambdaisland</groupId>
   <artifactId>ornament</artifactId>
-  <version>0.4.34</version>
+  <version>0.5.65</version>
   <name>ornament</name>
   <description>Clojure Styled Components</description>
   <url>https://github.com/lambdaisland/ornament</url>
@@ -25,7 +25,7 @@
     <url>https://github.com/lambdaisland/ornament</url>
     <connection>scm:git:git://github.com/lambdaisland/ornament.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/lambdaisland/ornament.git</developerConnection>
-    <tag>1369692c7894aed8d94771ed7572c6b9456dd6ba</tag>
+    <tag>ba895459ac37037437b8667da65a8d2effc2a88c</tag>
   </scm>
   <dependencies>
     <dependency>
@@ -36,7 +36,7 @@
     <dependency>
       <groupId>girouette</groupId>
       <artifactId>girouette</artifactId>
-      <version>0.0.6</version>
+      <version>0.0.7</version>
     </dependency>
     <dependency>
       <groupId>meta-merge</groupId>
@@ -89,7 +89,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <git-revision>1369692c7894aed8d94771ed7572c6b9456dd6ba</git-revision>
+              <git-revision>ba895459ac37037437b8667da65a8d2effc2a88c</git-revision>
             </manifestEntries>
           </archive>
         </configuration>
