@@ -25,7 +25,7 @@
                  com.lambdaisland/glogi {:mvn/version "1.1.144"}
                  ;; for lambdaisland.hiccup and lambdaisland.thicc, used in testing
                  lambdaisland/webstuff {:git/url "https://github.com/lambdaisland/webstuff"
-                                        :git/sha "5d5669e7f7829c65fdd00b19ef826565ce41b7ea"
+                                        :git/sha "9284216340a8107dea553f20bc247787f4f2efa9"
                                         #_#_:local/root "/home/arne/github/lambdaisland/webstuff"}}}
 
   :cssparser
