@@ -122,6 +122,12 @@
      :style {:color "blue"}}
    [:<> "hello, " person]))
 
+;; Example from the README
+(o/defstyled freebies-link :a
+  {:font-size "1rem"
+   :color "#cff9cf"
+   :text-decoration "underline"})
+
 #?(:clj
    (deftest css-test
      (is (= ".ot__simple{color:#fff}"
@@ -230,6 +236,13 @@
     "<span class=\"ot__simple\"><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a></span>"
 
     ))
+
+(deftest direct-invocation-test
+  (is (= [:a {:class ["ot__freebies_link"] :href "/episodes/interceptors-concepts"} "hello"]
+         (freebies-link {:href "/episodes/interceptors-concepts"} "hello")))
+
+  (is (= [:a {:class ["ot__freebies_link"]} "hello"]
+         (freebies-link "hello"))))
 
 (o/defstyled custok1 :div
   :bg-primary)

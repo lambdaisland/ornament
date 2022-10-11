@@ -1,10 +1,8 @@
 # Unreleased
 
-## Added
-
 ## Fixed
 
-## Changed
+- Fixed an issue withe direct invocation of components with a render function (tail-fn)
 
 # 0.5.65 (2022-09-20 / 94cbebe)
 

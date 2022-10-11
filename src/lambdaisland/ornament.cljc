@@ -384,14 +384,14 @@
   (if (sequential? children)
     (as-> children $
       (if (= :<> (first $)) (next $) $)
-      (if (vector? $) (list $) $)
       (if (map? (first $))
         (into [tag (attr-add-class
                     (merge-attrs (first $) (meta children) extra-attrs)
                     css-class)] (next $))
         (into [tag (attr-add-class
                     (merge-attrs (meta children) extra-attrs)
-                    css-class)] $)))
+                    css-class)]
+              (if (vector? $) (list $) $))))
     [tag (attr-add-class extra-attrs css-class) children]))
 
 (defn expand-hiccup-tag
@@ -404,7 +404,7 @@
   [tag css-class args component]
   (if component
     (expand-hiccup-tag-simple tag css-class (apply component args) (::attrs (first args)))
-    (expand-hiccup-tag-simple tag css-class args nil)))
+    (expand-hiccup-tag-simple tag css-class (seq args) nil)))
 
 (defn styled
   ([varsym css-class tag rules component]
