@@ -136,7 +136,12 @@
      (is (= ".ot__tokens{padding-left:1.25rem;padding-right:1.25rem;padding-top:.75rem;padding-bottom:.75rem;border-radius:.75rem}"
             (o/css tokens)))
 
-     (is (= ".ot__child_selector_tokens{padding-top:1rem}.ot__child_selector_tokens>*+*{margin-top:.5rem}"
+     (is (= ".ot__child_selector_tokens{padding-top:1rem}.ot__child_selector_tokens>:not([hidden])~:not([hidden]){margin-top:.5rem}"
+            ;; This is what the Tailwind docs say should be output, but that's
+            ;; not what Tailwind actually does, and so Girouette changed its
+            ;; behavior to match Tailwind, see
+            ;; https://github.com/green-coder/girouette/issues/84
+            ;; ".ot__child_selector_tokens{padding-top:1rem}.ot__child_selector_tokens>*+*{margin-top:.5rem}"
             (o/css child-selector-tokens)))
 
      (is (= ".ot__combined{padding-left:1.25rem;padding-right:1.25rem;padding-top:.75rem;padding-bottom:.75rem;border-radius:.75rem;color:azure}"

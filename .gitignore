@@ -16,3 +16,4 @@ package.json
 package-lock.json
 .clerk
 public
+deps.local.edn
