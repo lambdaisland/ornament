@@ -29,4 +29,10 @@
                                         #_#_:local/root "/home/arne/github/lambdaisland/webstuff"}}}
 
   :cssparser
-  {:extra-deps {net.sourceforge.cssparser/cssparser {:mvn/version "0.9.29"}}}}}
+  {:extra-deps {net.sourceforge.cssparser/cssparser {:mvn/version "0.9.29"}}}
+
+  :nextjournal/clerk
+  {:exec-fn nextjournal.clerk/build!
+   :exec-args {:paths ["notebooks/demo.clj"
+                       "notebooks/attributes_and_properties.clj"]}
+   :nextjournal.clerk/aliases [:dev]}}}
