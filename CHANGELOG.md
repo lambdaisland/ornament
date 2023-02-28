@@ -2,17 +2,17 @@
 
 ## Added
 
-## Fixed
-
-## Changed
+- Implement inheritance for fn-tails
 
 # 0.7.77 (2022-11-25 / a1f8d65)
 
 ## Added
 
+- Add Clerk garden setup
+
 ## Fixed
 
-## Changed
+- improved way to handle girouette v2 and v3 tokens
 
 # 0.6.69 (2022-10-11 / a629407)
 
