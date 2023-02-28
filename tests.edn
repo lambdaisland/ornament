@@ -1,5 +1,5 @@
 #kaocha/v1
-{:plugins [:notifier
+{:plugins [#_:notifier
            :print-invocations
            :profiling]
  :tests [{:id :clj}
