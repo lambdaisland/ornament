@@ -1,4 +1,4 @@
-# Unreleased
+# 0.8.84 (2023-02-28 / 8d54daa)
 
 ## Added
 

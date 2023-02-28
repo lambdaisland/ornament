@@ -20,13 +20,13 @@ CSS-in-Clj(s)
 To use the latest release, add the following to your `deps.edn` ([Clojure CLI](https://clojure.org/guides/deps_and_cli))
 
 ```
-com.lambdaisland/ornament {:mvn/version "0.7.77"}
+com.lambdaisland/ornament {:mvn/version "0.8.84"}
 ```
 
 or add the following to your `project.clj` ([Leiningen](https://leiningen.org/))
 
 ```
-[com.lambdaisland/ornament "0.7.77"]
+[com.lambdaisland/ornament "0.8.84"]
 ```
 <!-- /installation -->
 
