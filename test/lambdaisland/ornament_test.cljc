@@ -33,6 +33,9 @@
   ([& children]
    (into [:strong] children)))
 
+(o/defstyled with-body-derived with-body
+  :font-bold)
+
 (o/defstyled timed :time
   :border
   :border-black
@@ -153,6 +156,9 @@
      (is (= ".ot__with_body{padding-left:1.25rem;padding-right:1.25rem;padding-top:.75rem;padding-bottom:.75rem;border-radius:.75rem;color:azure}"
             (o/css with-body)))
 
+     (is (= ".ot__with_body_derived{padding-left:1.25rem;padding-right:1.25rem;padding-top:.75rem;padding-bottom:.75rem;border-radius:.75rem;color:azure;font-weight:700}"
+            (o/css with-body-derived)))
+
      (is (= ".ot__ornament_in_ornament{color:blue}.ot__ornament_in_ornament .ot__simple{color:red}"
             (o/css ornament-in-ornament)))
 
@@ -201,6 +207,9 @@
 
     [with-body "hello"]
     "<p class=\"ot__with_body\"><strong>hello</strong></p>"
+
+    [with-body-derived "hello"]
+    "<p class=\"ot__with_body_derived\"><strong>hello</strong></p>"
 
     ;; we're getting inconsistent but equivalent rendering here between clj and
     ;; cljs. Not ideal, but not a big deal either. Working around with reader

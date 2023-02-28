@@ -562,6 +562,10 @@
                    (symbol? tagname)
                    (into (or (:rules (get @registry (qualify-sym &env tagname))) [])
                          styles))
+           fn-tails (if (seq fn-tails)
+                      fn-tails
+                      (when (symbol? tagname)
+                        (:fn-tails (get @registry (qualify-sym &env tagname)))))
 
            ;; For ClojureScript support (but also used in Clojure-only), add the
            ;; Clojure-version of the styled component to the registry directly
@@ -600,6 +604,7 @@
                                           :tag tag
                                           :rules rules
                                           :classname css-class
+                                          :fn-tails fn-tails
                                           :component (styled varsym
                                                              css-class
                                                              tag
@@ -617,7 +622,7 @@
        ;; the component with the appropriate classes, it has no knowledge of the
        ;; actual styles, which are expected to be rendered on the backend or
        ;; during compilation.
-       `(def ~(with-meta sym {::css true :ornament (dissoc (get @registry varsym) :component)})
+       `(def ~(with-meta sym {::css true :ornament (dissoc (get @registry varsym) :component :fn-tails)})
           (styled '~varsym
                   ~css-class
                   ~tag
