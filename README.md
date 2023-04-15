@@ -82,7 +82,9 @@ so it gets served as any other plain CSS file.
 
 If you prefer to use [Girouette](https://github.com/green-coder/girouette)
 (Tailwind) utility classes (a.k.a. tokens), then you can do that as well, or you
-can mix and match.
+can mix and match. Note that for compatibility reasons Ornament will continue to
+default to Tailwind v2 components, but you can opt-in to v3, see the section
+below.
 
 ```clojure
 (o/defstyled freebies-link :a
@@ -112,6 +114,32 @@ the syntax and features of `defstyled` in detail down below. But first we need
 to explain Ornament's philosophy on how to deal with CSS, to give you accurate
 expectations of how it will behave. This is especially relevant for
 ClojureScript projects.
+
+## Choosing your Tailwind version
+
+We rely on [Girouette](https://github.com/green-coder/girouette) to provide us
+with a re-implementation in Clojure of Tailwinds components, classes, and
+styles. At time of writing Girouette is compatible with either Tailwind 2.0.3,
+or 3.0.24.
+
+To use Tailwind 3 tokens (classes), pass an extra `:tw-version 3` option to
+`set-tokens!`
+
+```clj
+(o/set-tokens! {:tw-version 3})
+```
+
+See "Customizing Girouette" below for more info on `set-tokens`, or check the
+docstring.
+
+The `girouette.tw.preflight` namespace provides the Tailwind preflight (reset)
+stylesheet for either v2 or v3. If you are using `o/defined-styles` you can also
+opt to have it automatically prepended. This function also accepts a similar
+`:tw-version` argument (`2` or `3)
+
+```clj
+(o/defined-styles {:preflight? true :tw-version 3})
+```
 
 ## Choosing a Hiccup Implementation
 
@@ -754,7 +782,8 @@ style declarations.
 - `:components`: sequence of Girouette components, each a map with `:id`
   (keyword), `:rules` (string, instaparse, can be omitted), and `:garden` (map,
   or function taking instaparse results and returning Garden map)
-
+- `:tw-version`: which Girouette defaults to use, either based on Tailwind
+  v2, or v3. Valid values: `2`, `3`. Defaults to v2.
 
 ```clojure
 (o/set-tokens! {:colors {:primary "001122"}
@@ -818,7 +847,7 @@ The end result is that we can do something like this:
 
 And get a bullet list which uses bear emojis for the bullets.
 
-`set-tokens` will add the new colors, fonts, and components to the defaults that
+`set-tokens!` will add the new colors, fonts, and components to the defaults that
 Girouette provides. You can change that by adding a `^:replace` tag (this uses
 meta-merge). e.g. `{:colors ^:replace {...}}`) 
 

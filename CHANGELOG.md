@@ -2,9 +2,8 @@
 
 ## Added
 
-## Fixed
-
-## Changed
+- Added a `:tw-version` flag for the preflight, similar to `set-tokens!`
+- Document how to opt-in to Tailwind v3 
 
 # 0.8.84 (2023-02-28 / 8d54daa)
 

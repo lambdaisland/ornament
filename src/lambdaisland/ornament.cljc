@@ -76,6 +76,8 @@
         :colors     girouette-color/tw-v3-unified-colors-extended
         :fonts      girouette-typography/tw-v2-font-family-map})
 
+     (def default-tokens default-tokens-v2)
+
      (defn set-tokens!
        "Set \"design tokens\": colors, fonts, and components
 
@@ -88,6 +90,8 @@
           `:id` (keyword), `:rules` (string, instaparse, can be omitted), and
           `:garden` (map, or function taking instaparse results and returning Garden
           map)
+        - `:tw-version`: which Girouette defaults to use, either based on Tailwind
+          v2, or v3. Valid values: 2, 3.
 
         If `:rules` is omitted we assume this is a static token, and we'll
         generate a rule of the form `token-id = <'token-id'>`.
@@ -100,8 +104,11 @@
         multiple tokens/maps/stylesUse `[:&]` for returning multiple
         tokens/maps/styles.
 
-        By default these are added to the Girouette defaults, use meta-merge
-        annotations (e.g. `{:colors ^:replace {...}}`) to change that behaviour."
+        By default these are added to the Girouette defaults, which are in terms
+        based on the Tailwind defaults. We still default to v2 (to avoid breaking
+        changes), but you can opt-in to Tailwind v3 by adding `:tw-version 3`. Use
+        meta-merge annotations (e.g. `{:colors ^:replace {...}}`) to change that
+        behaviour."
        [{:keys [components colors fonts tw-version]
          :or {tw-version 2}}]
        (let [{:keys [components colors fonts]}
@@ -638,8 +645,15 @@
        (into [(str "." css-class)] (process-rules rules)))))
 
 #?(:clj
-   (defn defined-styles [& [{:keys [preflight?]
-                             :or {preflight? false}}]]
+   (defn defined-styles
+     "Collect all styles that have been defined, and compile them down to CSS. Use
+  this to either spit out or inline a stylesheet with all your Ornament styles.
+  Optionally the Tailwind preflight (reset) stylesheet can be prepended using
+  `:preflight? true`. This defaults to Tailwind v2 (as provided by Girouette).
+  Version 3 is available with `:tw-version 3`"
+     [& [{:keys [preflight? tw-version]
+          :or {preflight? false
+               tw-version 2}}]]
      ;; Use registry, instead of inspecting metadata, for better cljs-only
      ;; support
      (let [registry-css (->> @registry
@@ -648,7 +662,9 @@
                              (map (fn [{:keys [var tag rules classname]}]
                                     (css (styled var classname tag rules nil)))))]
        (cond->> registry-css
-         preflight? (into [(gc/compile-css girouette-preflight/preflight-v2_0_3)])
+         preflight? (into [(gc/compile-css (case tw-version
+                                             2 girouette-preflight/preflight-v2_0_3
+                                             3 girouette-preflight/preflight-v3_0_24))])
          :always (str/join "\n")))))
 
 #?(:clj
