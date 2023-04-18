@@ -56,7 +56,7 @@ syntax is supported.)
 
 ```clojure
 ;; Hiccup
-[freebies-link {:href "/episodes/interceptors-concepts} "Freebies"]
+[freebies-link {:href "/episodes/interceptors-concepts"} "Freebies"]
 ```
 
 Which renders as:
