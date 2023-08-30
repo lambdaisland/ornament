@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.lambdaisland</groupId>
   <artifactId>ornament</artifactId>
-  <version>0.9.87</version>
+  <version>1.10.94</version>
   <name>ornament</name>
   <description>Clojure Styled Components</description>
   <url>https://github.com/lambdaisland/ornament</url>
@@ -25,7 +25,7 @@
     <url>https://github.com/lambdaisland/ornament</url>
     <connection>scm:git:git://github.com/lambdaisland/ornament.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/lambdaisland/ornament.git</developerConnection>
-    <tag>de74520fdd98c2bb3487ebbacbf72b96ac755aba</tag>
+    <tag>85faa855a888294ba334726a129fd685480247ad</tag>
   </scm>
   <dependencies>
     <dependency>
@@ -58,7 +58,7 @@
     <dependency>
       <groupId>io.pedestal</groupId>
       <artifactId>pedestal.log</artifactId>
-      <version>0.5.10</version>
+      <version>0.6.0</version>
       <optional>true</optional>
     </dependency>
   </dependencies>
@@ -89,7 +89,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <git-revision>de74520fdd98c2bb3487ebbacbf72b96ac755aba</git-revision>
+              <git-revision>85faa855a888294ba334726a129fd685480247ad</git-revision>
             </manifestEntries>
           </archive>
         </configuration>

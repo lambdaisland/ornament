@@ -1,3 +1,11 @@
+# Unreleased
+
+## Added
+
+## Fixed
+
+## Changed
+
 # 1.10.94 (2023-08-30 / d1e1c3b)
 
 ## Fixed
