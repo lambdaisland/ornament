@@ -420,7 +420,11 @@
   attributes passed in via the `::attrs` property."
   [tag css-class args component]
   (if component
-    (expand-hiccup-tag-simple tag css-class (apply component args) (::attrs (first args)))
+    (let [result (apply component args)]
+      (if (fn? result)
+        (fn [& args]
+          (expand-hiccup-tag-simple tag css-class (apply result args) (::attrs (first args))))
+        (expand-hiccup-tag-simple tag css-class result (::attrs (first args)))))
     (expand-hiccup-tag-simple tag css-class (seq args) nil)))
 
 (defn styled

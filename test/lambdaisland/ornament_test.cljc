@@ -131,6 +131,12 @@
    :color "#cff9cf"
    :text-decoration "underline"})
 
+(o/defstyled form-2 :div
+  ([a]
+   (fn [b]
+     [:<> "hello"])))
+
+
 #?(:clj
    (deftest css-test
      (is (= ".ot__simple{color:#fff}"
@@ -248,6 +254,8 @@
      [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a] [:a]
      [:a] [:a] [:a] [:a]]
     "<span class=\"ot__simple\"><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a></span>"
+    [(form-2 7) {::o/attrs {:data-a 11}}]
+    "<div data-a=\"11\" class=\"ot-form-2\">hello</div>"
 
     ))
 

@@ -1,10 +1,8 @@
 # Unreleased
 
-## Added
-
 ## Fixed
 
-## Changed
+- Support using `defstyled` components as reagent form-2 components
 
 # 0.9.87 (2023-04-15 / dac82f4)
 
