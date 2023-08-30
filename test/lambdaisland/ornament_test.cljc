@@ -136,7 +136,6 @@
    (fn [b]
      [:<> "hello"])))
 
-
 #?(:clj
    (deftest css-test
      (is (= ".ot__simple{color:#fff}"
@@ -221,18 +220,15 @@
     ;; cljs. Not ideal, but not a big deal either. Working around with reader
     ;; conditionals.
     [attrs-in-fragment "hello"]
-    #?(:clj "<div lang=\"nl\" class=\"ot__attrs_in_fragment\">hello</div>"
-       :cljs "<div class=\"ot__attrs_in_fragment\" lang=\"nl\">hello</div>")
+    "<div lang=\"nl\" class=\"ot__attrs_in_fragment\">hello</div>"
 
     [attrs-in-fragment-props
      {:person "Arne"
       ::o/attrs {:lang "en" :title "greeting"}}]
-    #?(:clj "<div lang=\"en\" title=\"greeting\" class=\"ot__attrs_in_fragment_props\">hello, Arne</div>"
-       :cljs "<div title=\"greeting\" class=\"ot__attrs_in_fragment_props\" lang=\"en\">hello, Arne</div>")
+    "<div lang=\"en\" title=\"greeting\" class=\"ot__attrs_in_fragment_props\">hello, Arne</div>"
 
     [attrs-in-fragment-props {:person "Jake"}]
-    #?(:clj "<div lang=\"nl\" class=\"ot__attrs_in_fragment_props\">hello, Jake</div>"
-       :cljs "<div class=\"ot__attrs_in_fragment_props\" lang=\"nl\">hello, Jake</div>")
+    "<div lang=\"nl\" class=\"ot__attrs_in_fragment_props\">hello, Jake</div>"
 
     [attrs-in-fragment-styled {:person "Finn"}]
     "<div class=\"ot__attrs_in_fragment_styled extra-class\" style=\"color: blue;\">hello, Finn</div>"
@@ -255,7 +251,7 @@
      [:a] [:a] [:a] [:a]]
     "<span class=\"ot__simple\"><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a><a></a></span>"
     [(form-2 7) {::o/attrs {:data-a 11}}]
-    "<div data-a=\"11\" class=\"ot-form-2\">hello</div>"
+    "<div data-a=\"11\" class=\"ot__form_2\">hello</div>"
 
     ))
 

@@ -8,24 +8,24 @@
  :aliases
  {:dev
   {:extra-paths ["dev"]
-   :extra-deps  {djblue/portal {:mvn/version "RELEASE"}
-                 io.github.nextjournal/clerk {:mvn/version "RELEASE"}
-                 com.lambdaisland/hiccup {:mvn/version "RELEASE"} }}
+   :extra-deps  {djblue/portal {:mvn/version "0.46.0"}
+                 io.github.nextjournal/clerk {:mvn/version "0.14.919"}
+                 com.lambdaisland/hiccup {:mvn/version "0.0.33"} }}
 
   :byo
   {:extra-deps {hawk/hawk {:mvn/version "0.2.11"}
                 com.lambdaisland/glogi {:mvn/version "1.3.169"}
-                io.pedestal/pedestal.log {:mvn/version "0.5.10"}}}
+                io.pedestal/pedestal.log {:mvn/version "0.6.0"}}}
 
   :test
   {:extra-paths ["test"]
-   :extra-deps  {lambdaisland/kaocha {:mvn/version "RELEASE"}
-                 lambdaisland/kaocha-cljs {:mvn/version "RELEASE"}
-                 org.clojure/clojurescript {:mvn/version "RELEASE"}
+   :extra-deps  {lambdaisland/kaocha {:mvn/version "1.86.1355"}
+                 lambdaisland/kaocha-cljs {:mvn/version "1.5.154"}
+                 org.clojure/clojurescript {:mvn/version "1.11.60"}
                  com.lambdaisland/glogi {:mvn/version "1.3.169"}
                  ;; for lambdaisland.hiccup and lambdaisland.thicc, used in testing
                  lambdaisland/webstuff {:git/url "https://github.com/lambdaisland/webstuff"
-                                        :git/sha "9284216340a8107dea553f20bc247787f4f2efa9"
+                                        :git/sha "78033fbda228c5e2fc0745619e7830b005407156"
                                         #_#_:local/root "/home/arne/github/lambdaisland/webstuff"}}}
 
   :cssparser
