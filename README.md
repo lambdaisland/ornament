@@ -294,6 +294,56 @@ components in the style rules section, even in ClojureScript, see the section
   [:.foo referenced]) ;; use as style rule
 ```
 
+#### Computing values (referencing vars) inside style rules in cljc files
+
+Style rules are processed during macroexpansion, which happens in Clojure, even
+when compiling ClojureScript. This means that any code inside style rules needs
+to be able to evaluate in Clojure by the time ClojureScript starts compiling the
+`defstyled` form.
+
+Consider this namespace
+
+```clj
+;; components.cljc
+(ns my.components
+  (:require [lambdaisland.ornament :as o]))
+
+(def my-tokens {:main-color "green"})
+
+(o/defstyled with-code :div
+  {:background-color (-> my-tokens :main-color)})
+```
+
+In Clojure this works as you would expect, but when compiling this as a
+ClojureScript file it fails, because this file was never loaded as a Clojure
+namespace, so the var `#'my.components/my-tokens` doesn't exist.
+
+To fix this you can use `:require-macros`. This instructs the ClojureScript
+compiler to load a given Clojure namespace before continuing the compilation of
+the current namespace.
+
+```clj
+(ns my.components
+  (:require [lambdaisland.ornament :as o])
+  #?(:cljs (:require-macros my.components)))
+
+#?(:clj
+   (def my-tokens {:main-color "green"}))
+
+(o/defstyled with-code :div
+  {:background-color (-> my-tokens :main-color)})
+```
+
+This way before ClojureScript compiles `my.components` as a cljs file, it first
+loads `my.components` as a clj namespace. This creates the `#'my-tokens` var. It
+the continues with the cljs compilation, so that when it gets to `defstyled` and
+processed the rules (`{:background-color ...}`) `my-tokens` resolves to the
+correct var, and can be evaluated.
+
+Wrapping `my-tokens` in `#?(:clj ...)` is not strictly necessary, but it helps
+to emphasize the point that this definition is only ever used on the Clojure
+side, you don't need it in your compiled ClojureScript.
+
 #### Shadow-cljs build hook example
 
 This is enough to get recompilation of your styles to CSS, which shadow-cljs

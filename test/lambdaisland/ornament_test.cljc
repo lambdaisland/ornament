@@ -3,7 +3,9 @@
   (:require [lambdaisland.ornament :as o]
             [clojure.test :refer [deftest testing is are use-fixtures run-tests join-fixtures]]
             #?(:clj [lambdaisland.hiccup :as hiccup]
-               :cljs [lambdaisland.thicc :as thicc])))
+               :cljs [lambdaisland.thicc :as thicc]))
+  #?(:cljs
+     (:require-macros lambdaisland.ornament-test)))
 
 (defn render [h]
   #?(:clj (hiccup/render h {:doctype? false})
@@ -58,9 +60,8 @@
 (def my-tokens {:main-color "green"})
 
 ;; Referencing non-defstyled variables in rules is only possible in Clojure
-#?(:clj
-   (o/defstyled with-code :div
-     {:background-color (-> my-tokens :main-color)}))
+(o/defstyled with-code :div
+  {:background-color (-> my-tokens :main-color)})
 
 ;; TODO add assertions for these
 (o/defstyled with-media :div
@@ -131,10 +132,18 @@
    :color "#cff9cf"
    :text-decoration "underline"})
 
+;; For use in reagent, `::o/attrs` are still propagated to the element
 (o/defstyled form-2 :div
   ([a]
    (fn [b]
      [:<> "hello"])))
+
+;; Will fail to compile on cljs if the :require-macros line is missing
+(o/defstyled with-str :div
+  {:border (str "1px solid red")}
+  ([props]
+   [:<> "foo"]))
+
 
 #?(:clj
    (deftest css-test
