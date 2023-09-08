@@ -314,13 +314,14 @@ Consider this namespace
   {:background-color (-> my-tokens :main-color)})
 ```
 
-In Clojure this works as you would expect, but when compiling this as a
-ClojureScript file it fails, because this file was never loaded as a Clojure
-namespace, so the var `#'my.components/my-tokens` doesn't exist.
+In Clojure this works as you would expect but when compiling this as a
+ClojureScript file it fails.  The failure is due to the file never being loaded
+as a Clojure namespace, so the Clojure var `#'my.components/my-tokens` doesn't
+exist in the Clojure environment which is where macro expansion takes place.
 
-To fix this you can use `:require-macros`. This instructs the ClojureScript
-compiler to load a given Clojure namespace before continuing the compilation of
-the current namespace.
+To fix this you can use the `:require-macros` directive which instructs the
+ClojureScript compiler to load a given Clojure namespace (in this case the
+current namespace) before continuing the compilation of the current namespace.
 
 ```clj
 (ns my.components
@@ -334,15 +335,56 @@ the current namespace.
   {:background-color (-> my-tokens :main-color)})
 ```
 
-This way before ClojureScript compiles `my.components` as a cljs file, it first
-loads `my.components` as a clj namespace. This creates the `#'my-tokens` var. It
-the continues with the cljs compilation, so that when it gets to `defstyled` and
-processed the rules (`{:background-color ...}`) `my-tokens` resolves to the
-correct var, and can be evaluated.
+This addresses the problem by instructing the ClojureScript compiler to first
+load `my.components` as a clj namespace thereby creating the `#'my-tokens`
+Clojure var. The compiler then continues with the cljs compilation and when it
+gets to expansion of the `defstyled` macro form (specifically processing of the
+style rule `{:background-color ...}`) the `#'my-tokens` var is available in the
+clj environment and evaluated for it's value which is then included in the
+Ornament style registry.
 
 Wrapping `my-tokens` in `#?(:clj ...)` is not strictly necessary, but it helps
 to emphasize the point that this definition is only ever used on the Clojure
 side, you don't need it in your compiled ClojureScript.
+
+##### Important note about CLJC files and clojure.core symbols
+
+If you do __any__ computation in your style rules it is recommended that you
+require the file as clj by utilising the `:require-macros` directive to self
+require the namespace.
+
+```clj
+(ns my.components
+  (:require [lambdaisland.ornament :as o])
+  #?(:cljs (:require-macros my.components)))
+
+(o/defstyled with-code :div
+  {:background-color (str "red")})
+```
+
+The need for this is a subtle consequence of the same interaction between
+Clojure and the ClojureScript compiler outlined in the previous section. A
+similar issue will manifest if you try to use `clojure.core` symbols in your
+style rules without requiring the clj namespace. This is surprising at first but
+makes sense after considering that it is the `ns` form that auto refers all
+`clojure.core` symbols into the current namespace. It follows that if the `ns`
+form is not evaluated, because we do not require the cljc file as a clj file,
+then no symbols mapping to the `clojure.core` symbols will have created in the
+current namespace. The `clojure.core` symbols are however interned, and as such
+fully qualifying the namespace will work but that is not an ergonomic solution. 
+
+```clj
+(ns my.components
+  (:require [lambdaisland.ornament :as o]))
+
+;; Does not work
+(o/defstyled with-code :div
+  {:background-color (str "red")})
+
+;; Does work but not recommended
+(o/defstyled with-code :div
+  {:background-color (clojure.core/str "red")})
+```
 
 #### Shadow-cljs build hook example
 
