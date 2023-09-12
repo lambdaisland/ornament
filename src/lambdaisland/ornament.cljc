@@ -103,8 +103,7 @@
         - `:fonts`: map from keyword to font stack (comman separated string)
         - `:components`: sequence of Girouette components, each a map with
           `:id` (keyword), `:rules` (string, instaparse, can be omitted), and
-          `:garden` (map, or function taking instaparse results and returning Garden
-          map)
+          `:garden` (map, vector, or function; see below for details)
         - `:tw-version`: which Girouette defaults to use, either based on Tailwind
           v2, or v3. Valid values: 2, 3.
 
@@ -112,20 +111,20 @@
         generate a rule of the form `token-id = <'token-id'>`.
 
         `:garden` can be a function, in which case it receives a map with a
-        `:compoent-data` key containing the instaparse parse tree. Literal maps or
+        `:component-data` key containing the instaparse parse tree. Literal maps or
         vectors are wrapped in a function, in case the returned Garden is fixed. The
         resulting Garden styles are processed again as in `defstyled`, so you can use
         other Girouette or other tokens in there as well. Use `[:&]` for returning
-        multiple tokens/maps/stylesUse `[:&]` for returning multiple
-        tokens/maps/styles.
+        multiple tokens/maps/styles.
 
         By default these are added to the Girouette defaults, which are in terms
-        based on the Tailwind defaults. We still default to v2 (to avoid breaking
-        changes), but you can opt-in to Tailwind v3 by adding `:tw-version 3`. Use
-        meta-merge annotations (e.g. `{:colors ^:replace {...}}`) to change that
-        behaviour."
+        based on the Tailwind defaults. Use meta-merge annotations (e.g. `{:colors
+        ^:replace {...}}`) to change that behaviour. We still default to v2 (to
+        avoid breaking changes), but you can opt-in to Tailwind v3 by adding
+        `:tw-version 3`."
        [{:keys [components colors fonts tw-version]
-         :or {tw-version 2}}]
+         :or {tw-version 2}
+         :as configuration}]
        (let [{:keys [components colors fonts]}
              (meta-merge/meta-merge
               (case tw-version
