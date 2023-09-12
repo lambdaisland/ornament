@@ -659,9 +659,11 @@
            css-class (classname-for varsym)
            [docstring & styles] (if (string? (first styles)) styles (cons nil styles))
            [styles fn-tails] (split-with (complement fn-tail?) styles)
+           qualified-symbol (qualify-sym &env tagname)
            tag (if (keyword? tagname)
                  tagname
-                 (get-in @registry [(qualify-sym &env tagname) :tag]))
+                 (or (get-in @registry [qualified-symbol :tag])
+                     qualified-symbol))
            rules (cond
                    (keyword? tagname)
                    (vec styles)
