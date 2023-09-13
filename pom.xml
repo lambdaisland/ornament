@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.lambdaisland</groupId>
   <artifactId>ornament</artifactId>
-  <version>1.10.94</version>
+  <version>1.11.101</version>
   <name>ornament</name>
   <description>Clojure Styled Components</description>
   <url>https://github.com/lambdaisland/ornament</url>
@@ -25,9 +25,14 @@
     <url>https://github.com/lambdaisland/ornament</url>
     <connection>scm:git:git://github.com/lambdaisland/ornament.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/lambdaisland/ornament.git</developerConnection>
-    <tag>85faa855a888294ba334726a129fd685480247ad</tag>
+    <tag>096860211d199db32a6d19c049c55aab792633d8</tag>
   </scm>
   <dependencies>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>clojure</artifactId>
+      <version>1.11.1</version>
+    </dependency>
     <dependency>
       <groupId>garden</groupId>
       <artifactId>garden</artifactId>
@@ -89,7 +94,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <git-revision>85faa855a888294ba334726a129fd685480247ad</git-revision>
+              <git-revision>096860211d199db32a6d19c049c55aab792633d8</git-revision>
             </manifestEntries>
           </archive>
         </configuration>
