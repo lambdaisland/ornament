@@ -1,10 +1,8 @@
 # Unreleased
 
-## Added
-
 ## Fixed
 
-## Changed
+- Allow reusing the styles of one component directly inside another (see tests for example)
 
 # 1.10.94 (2023-08-30 / d1e1c3b)
 
