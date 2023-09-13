@@ -145,6 +145,26 @@
    [:<> "foo"]))
 
 
+;; More ways to reuse styles across components
+(o/defstyled bold :span
+  :font-medium)
+
+;; Referencing another component at the top level like this inherits its styles
+(o/defstyled heading-1-top :h1
+  bold :text-3xl)
+
+;; Of course we can chain these
+(o/defstyled heading-2-top :h2
+  heading-1-top :text-2xl)
+
+;; Doing this inside a `:&` is equivalent
+(o/defstyled heading-1-nest :h1
+  [:& bold :text-3xl])
+
+(o/defstyled heading-2-nest :h2
+  [:& heading-1-nest :text-2xl])
+
+
 #?(:clj
    (deftest css-test
      (is (= ".ot__simple{color:#fff}"
@@ -193,8 +213,20 @@
             ".ot__siblings div,.ot__siblings span{color:red}"))
 
      (is (= ".ot__siblings_plain ul,.ot__siblings_plain ol{background-color:blue}"
-            (o/css siblings-plain)))))
+            (o/css siblings-plain)))
 
+
+     (is (= ".ot__heading_1_top{font-weight:500;font-size:1.875rem;line-height:2.25rem}"
+            (o/css heading-1-top)))
+
+     (is (= ".ot__heading_2_top{font-weight:500;font-size:1.5rem;line-height:2rem}"
+            (o/css heading-2-top)))
+
+     (is (= ".ot__heading_1_nest{font-weight:500;font-size:1.875rem;line-height:2.25rem}"
+            (o/css heading-1-nest)))
+
+     (is (= ".ot__heading_2_nest{font-weight:500;font-size:1.5rem;line-height:2rem}"
+            (o/css heading-2-nest)))))
 
 (deftest rendering-test
   (are [hiccup html] (= html (render hiccup))
@@ -228,16 +260,20 @@
     ;; we're getting inconsistent but equivalent rendering here between clj and
     ;; cljs. Not ideal, but not a big deal either. Working around with reader
     ;; conditionals.
+    ;; FIXME: write this in a more robust way, maintaining this is becoming a PITA
     [attrs-in-fragment "hello"]
-    "<div lang=\"nl\" class=\"ot__attrs_in_fragment\">hello</div>"
+    #?(:clj "<div lang=\"nl\" class=\"ot__attrs_in_fragment\">hello</div>"
+       :cljs "<div class=\"ot__attrs_in_fragment\" lang=\"nl\">hello</div>")
 
     [attrs-in-fragment-props
      {:person "Arne"
       ::o/attrs {:lang "en" :title "greeting"}}]
-    "<div lang=\"en\" title=\"greeting\" class=\"ot__attrs_in_fragment_props\">hello, Arne</div>"
+    #?(:clj "<div lang=\"en\" title=\"greeting\" class=\"ot__attrs_in_fragment_props\">hello, Arne</div>"
+       :cljs "<div title=\"greeting\" class=\"ot__attrs_in_fragment_props\" lang=\"en\">hello, Arne</div>")
 
     [attrs-in-fragment-props {:person "Jake"}]
-    "<div lang=\"nl\" class=\"ot__attrs_in_fragment_props\">hello, Jake</div>"
+    #?(:clj "<div lang=\"nl\" class=\"ot__attrs_in_fragment_props\">hello, Jake</div>"
+       :cljs "<div class=\"ot__attrs_in_fragment_props\" lang=\"nl\">hello, Jake</div>")
 
     [attrs-in-fragment-styled {:person "Finn"}]
     "<div class=\"ot__attrs_in_fragment_styled extra-class\" style=\"color: blue;\">hello, Finn</div>"

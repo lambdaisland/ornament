@@ -1,7 +1,8 @@
 {:paths ["src" "resources"]
 
  :deps
- {garden/garden         {:mvn/version "1.3.10"}
+ {org.clojure/clojure   {:mvn/version "1.11.1"}
+  garden/garden         {:mvn/version "1.3.10"}
   girouette/girouette   {:mvn/version "0.0.10"}
   meta-merge/meta-merge {:mvn/version "1.0.0"}}
 

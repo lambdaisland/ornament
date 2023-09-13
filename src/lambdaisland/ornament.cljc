@@ -315,16 +315,23 @@
   If multiple consecutive rules result in Garden property maps, then they get
   merged, to prevent unnecessary bloat of the compiled CSS."
        [rules]
-       (seq (reduce (fn [acc rule]
-                      (let [r (process-rule rule)]
-                        (if (and (map? r)
+       (let [add-rule (fn add-rule [acc r]
+                        (cond
+                          (and (vector? r)
+                               (or (= :& (first r))
+                                   (= "&" (first r))))
+                          (reduce add-rule acc (next r))
+
+                          (and (map? r)
                                  (map? (last acc))
                                  (not (record? r))
                                  (not (record? (last acc))))
                           (conj (vec (butlast acc))
                                 (merge (last acc) r))
-                          (conj acc r))))
-                    [] rules)))))
+
+                          :else
+                          (conj acc r)))]
+         (seq (reduce add-rule [] (map process-rule rules)))))))
 
 (defn add-class
   "Hiccup helper, add a CSS classname to an existing `:class` property
@@ -607,7 +614,13 @@
                                                   [s])))
                                       (next o))
                                 o))
-                            rules)))]
+                            (vec
+                             (mapcat (fn [s]
+                                       (if (and (symbol? s)
+                                                (contains? @registry (qualify-sym &env s)))
+                                         (get-in @registry [(qualify-sym &env s) :rules])
+                                         [s]))
+                                     rules)))))]
        (swap! registry
               (fn [reg]
                 (-> reg
