@@ -603,16 +603,21 @@
                           ~(walk/postwalk
                             (fn [o]
                               (if (vector? o)
-                                (into [(if (and (symbol? (first o))
-                                                (contains? @registry (qualify-sym &env (first o))))
-                                         `(str "." (get-in @registry ['~(qualify-sym &env (first o)) :classname]))
-                                         (first o))]
-                                      (mapcat (fn [s]
-                                                (if (and (symbol? s)
-                                                         (contains? @registry (qualify-sym &env s)))
-                                                  (get-in @registry [(qualify-sym &env s) :rules])
-                                                  [s])))
-                                      (next o))
+                                (let [component->selector
+                                      (fn [s]
+                                        (if (and (symbol? s)
+                                                 (contains? @registry (qualify-sym &env s)))
+                                          `(str "." (get-in @registry ['~(qualify-sym &env s) :classname]))
+                                          s))]
+                                  (into [(if (set? (first o))
+                                           (into #{} (map component->selector (first o)))
+                                           (component->selector (first o)))]
+                                        (mapcat (fn [s]
+                                                  (if (and (symbol? s)
+                                                           (contains? @registry (qualify-sym &env s)))
+                                                    (get-in @registry [(qualify-sym &env s) :rules])
+                                                    [s])))
+                                        (next o)))
                                 o))
                             (vec
                              (mapcat (fn [s]
