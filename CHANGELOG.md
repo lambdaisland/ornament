@@ -1,3 +1,13 @@
+# Unreleased
+
+## Added
+
+## Fixed
+
+- Fix component resolution inside a set (in a rule of another component) (see tests for example)
+
+## Changed
+
 # 1.11.101 (2023-09-13 / 213279d)
 
 ## Fixed

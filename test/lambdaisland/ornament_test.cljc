@@ -422,6 +422,31 @@
 
        (reset! o/registry reg))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Component resolution
+
+(o/defstyled child-1 :div
+  :bg-red-100
+  ([]
+   [:p "hello"]))
+
+(o/defstyled child-2 :div
+  :bg-blue-100
+  ([]
+   [:p "world"]))
+
+(o/defstyled parent-set :div
+  [#{child-1 child-2} :bg-green-700]
+  ([]
+   [:<>
+    [child-1]
+    [child-2]]))
+
+#?(:clj
+   (deftest component-resolution-inside-set
+     (is (= ".ot__parent_set .ot__child_2,.ot__parent_set .ot__child_1{--gi-bg-opacity:1;background-color:rgba(21,128,61,var(--gi-bg-opacity))}"
+            (o/css parent-set)))))
+
 (comment
   (require 'kaocha.repl)
   (kaocha.repl/run)
