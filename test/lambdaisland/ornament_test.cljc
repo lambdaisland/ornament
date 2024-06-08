@@ -164,6 +164,17 @@
 (o/defstyled heading-2-nest :h2
   [:& heading-1-nest :text-2xl])
 
+(o/defstyled with-doc :div
+  "A documented component")
+
+(o/defstyled with-doc2 :div
+  "A documented component"
+  :mx-2 {:color "blue"})
+
+(o/defstyled with-doc3 :div
+  "A documented component"
+  ([]
+   [:<> "hello"]))
 
 #?(:clj
    (deftest css-test
@@ -417,7 +428,7 @@
            (o/defstyled ~'more-styles :span
              :rounded-xl)))
 
-       (is (= ".ot__my_styles{color:red}\n.ot__more_styles{border-radius:.75rem}"
+       (is (= ".ot__my_styles{color:red}.ot__more_styles{border-radius:.75rem}"
               (o/defined-styles)))
 
        (reset! o/registry reg))))
@@ -446,6 +457,17 @@
    (deftest component-resolution-inside-set
      (is (= ".ot__parent_set .ot__child_2,.ot__parent_set .ot__child_1{--gi-bg-opacity:1;background-color:rgba(21,128,61,var(--gi-bg-opacity))}"
             (o/css parent-set)))))
+
+(deftest docstring-test
+  (is (= "A documented component" (:doc (meta #'with-doc))))
+  (is (= "A documented component" (:doc (meta #'with-doc2))))
+  (is (= "A documented component" (:doc (meta #'with-doc3))))
+
+  (is (= '([] [& children] [attrs & children])
+         (:arglists (meta #'combined))))
+
+  (is (= '([{:keys [date time]}])
+         (:arglists (meta #'timed)))))
 
 (comment
   (require 'kaocha.repl)
