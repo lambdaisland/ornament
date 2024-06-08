@@ -570,6 +570,7 @@
    (defmacro defstyled [sym tagname & styles]
      (let [varsym (symbol (name (ns-name *ns*)) (name sym))
            css-class (classname-for varsym)
+           [docstring & styles] (if (string? (first styles)) styles (cons nil styles))
            [styles fn-tails] (split-with (complement fn-tail?) styles)
            tag (if (keyword? tagname)
                  tagname
@@ -651,7 +652,10 @@
        ;; the component with the appropriate classes, it has no knowledge of the
        ;; actual styles, which are expected to be rendered on the backend or
        ;; during compilation.
-       `(def ~(with-meta sym {::css true :ornament (dissoc (get @registry varsym) :component :fn-tails)})
+       `(def ~(with-meta sym (cond-> {::css true
+                                      :ornament (dissoc (get @registry varsym) :component :fn-tails)}
+                               docstring
+                               (assoc :doc docstring)))
           (styled '~varsym
                   ~css-class
                   ~tag
@@ -661,10 +665,11 @@
 
 #?(:clj
    (defn defined-garden []
-     (for [{:keys [css-class rules]} (->> @registry
-                                          vals
-                                          (sort-by :index))]
-       (into [(str "." css-class)] (process-rules rules)))))
+     (->> @registry
+          vals
+          (sort-by :index)
+          (map (fn [{:keys [var tag rules classname]}]
+                 (as-garden (styled var classname tag rules nil)))))))
 
 #?(:clj
    (defn defined-styles
@@ -676,18 +681,12 @@
      [& [{:keys [preflight? tw-version]
           :or {preflight? false
                tw-version 2}}]]
-     ;; Use registry, instead of inspecting metadata, for better cljs-only
-     ;; support
-     (let [registry-css (->> @registry
-                             vals
-                             (sort-by :index)
-                             (map (fn [{:keys [var tag rules classname]}]
-                                    (css (styled var classname tag rules nil)))))]
-       (cond->> registry-css
-         preflight? (into [(gc/compile-css (case tw-version
-                                             2 girouette-preflight/preflight-v2_0_3
-                                             3 girouette-preflight/preflight-v3_0_24))])
-         :always (str/join "\n")))))
+     (gc/compile-css
+      {:pretty-print? false}
+      (cond->> (defined-garden)
+        preflight? (concat (case tw-version
+                             2 girouette-preflight/preflight-v2_0_3
+                             3 girouette-preflight/preflight-v3_0_24))))))
 
 #?(:clj
    (defn cljs-restore-registry

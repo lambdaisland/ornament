@@ -2,9 +2,11 @@
 
 ## Added
 
+- Support docstrings, they come after the tagname, before any styles or tokens
+
 ## Fixed
 
-## Changed
+- Fix `defined-garden`
 
 # 1.12.107 (2023-09-27 / 2444e34)
 
