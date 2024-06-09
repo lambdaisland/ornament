@@ -209,8 +209,9 @@
        (let [prefix (or (:ornament/prefix (meta (the-ns (symbol (namespace varsym)))))
                         (-> varsym
                             namespace
-                            (str/replace #"\." "_")))]
-         (str prefix "__" (munge-str (name varsym)))))
+                            (str/replace #"\." "_")
+                            (->> (str "__"))))]
+         (str prefix (munge-str (name varsym)))))
 
      (defn join-vector-by [sep val]
        (if (vector? val)
@@ -602,6 +603,20 @@
                   (update-index varsym))))))
 
 #?(:clj
+   (defn render-docstring
+     "Add the compiled CSS to the docstring, for easy dev-time reference. Ignored
+  when `*compile-files*` is true, to prevent CSS from bloating up a production
+  build."
+     [docstring rules]
+     (str
+      docstring
+      (when (not *compile-files*)
+        (str
+         (when docstring
+           (str "\n\n"))
+         (gc/compile-css (process-rules rules)))))))
+
+#?(:clj
    (defmacro defstyled [sym tagname & styles]
      (let [varsym (symbol (name (ns-name *ns*)) (name sym))
            css-class (classname-for varsym)
@@ -682,19 +697,19 @@
        ;; actual styles, which are expected to be rendered on the backend or
        ;; during compilation.
        `(def ~(with-meta sym
-                (cond-> {::css true
-                         :ornament (dissoc (get @registry varsym) :component :fn-tails)
-                         :arglists (if (seq fn-tails)
-                                     `'~(map first fn-tails)
-                                     ''([] [& children] [attrs & children]))}
-                  docstring
-                  (assoc :doc docstring)))
+                {::css true
+                 :ornament (dissoc (get @registry varsym) :component :fn-tails)
+                 :arglists (if (seq fn-tails)
+                             `'~(map first fn-tails)
+                             ''([] [& children] [attrs & children]))
+                 :doc (render-docstring docstring [(into [(str "." css-class)] rules)])})
           (styled '~varsym
                   ~css-class
                   ~tag
                   ~(when-not (:ns &env) rules)
                   ~(when (seq fn-tails)
                      `(fn ~@fn-tails)))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Rules
 
@@ -716,7 +731,7 @@
                             ~(cons 'list rules)))]
        (register! rules-registry varsym {:rules rules})
        (when-not (:ns &env)
-         `(def ~rules-name ~@(when docstring [docstring]) '~rules)))))
+         `(def ~rules-name ~(render-docstring docstring rules) '~rules)))))
 
 #?(:clj
    (defmacro defutil
@@ -726,61 +741,112 @@
       `(defutil ~util-name ~nil ~styles))
      ([util-name docstring styles]
       (let [varsym (qualify-sym &env util-name)
-            klzname (classname-for varsym)]
-        (register! rules-registry varsym {:rules (list [(str "." klzname) styles])})
+            klzname (classname-for varsym)
+            rules (list [(str "." klzname)
+                         (eval `(do
+                                  (in-ns '~(ns-name *ns*))
+                                  ~styles))])
+            docstring (render-docstring docstring rules)]
+        (register! rules-registry varsym {:rules rules})
         `(def ~util-name
-           (reify
-             Object
-             (toString [_] ~klzname)
-             gc/IExpandable
-             (expand [_]
-               (gc/expand
-                [:& ~styles]))))))))
+           ~docstring
+           (with-meta
+             (reify
+               Object
+               (toString [_] ~klzname)
+               gc/IExpandable
+               (expand [_]
+                 (gc/expand
+                  [:& ~styles])))
+             {:type ::util}))))))
+
+#?(:clj
+   (defmethod print-method ::util [u writer]
+     (.write writer (str u))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Props
 
-(defprotocol CSSProp
-  (lvalue [p])
-  (rvalue [p]))
+#?(:clj
+   (defprotocol CSSProp
+     (lvalue [p])
+     (rvalue [p])))
 
-(defn css-prop [prop-name]
-  (with-meta
-    (reify
-      CSSProp
-      (lvalue [_] (str "--" (name prop-name)))
-      (rvalue [_] (str "var(--" (name prop-name) ")"))
-      gu/ToString
-      (to-str [this]
-        (str "--" (name prop-name)))
-      Object
-      (toString [_] (str "var(--" (name prop-name) ")")))
-    {:type ::prop}))
+#?(:clj
+   (defn css-prop [prop-name default]
+     (with-meta
+       (reify
+         CSSProp
+         (lvalue [_] (str "--" (name prop-name)))
+         (rvalue [_] (str "var(--" (name prop-name) ")"))
+         gu/ToString
+         (to-str [this]
+           (str "--" (name prop-name)))
+         Object
+         (toString [_] (str "var(--" (name prop-name) ")"))
+         clojure.lang.ILookup
+         (valAt [this kw] (when (= :default kw) default))
+         (valAt [this kw fallback] (if (= :default kw) default fallback))
+         )
+       {:type ::prop})))
 
-(defmethod print-method ::prop [p writer]
-  (.write writer (lvalue p)))
+(clojure.reflect/reflect clojure.lang.ILookup)
 
-(defn propname-for
-  [propsym]
-  (let [prefix (or (:ornament/prefix (meta (the-ns (symbol (namespace propsym)))))
-                   (-> propsym
-                       namespace
-                       (str/replace #"\." "-")
-                       (str "--")))]
-    (str prefix (munge-str (name propsym) (dissoc munge-map \-)))))
+#?(:clj
+   (defmethod print-method ::prop [p writer]
+     (.write writer (lvalue p))))
 
-(defmacro defprop
-  "Define a custom CSS property (variable). Use the resulting var either where a
+#?(:clj
+   (defn propname-for
+     [propsym]
+     (let [prefix (or (:ornament/prefix (meta (the-ns (symbol (namespace propsym)))))
+                      (-> propsym
+                          namespace
+                          (str/replace #"\." "-")
+                          (str "--")))]
+       (str prefix (munge-str (str/replace (name propsym)
+                                           #"^--" "") (dissoc munge-map \-))))))
+
+#?(:clj
+   (defmacro defprop
+     "Define a custom CSS property (variable). Use the resulting var either where a
   value is expected (will expand to `var(--var-name)`), or where a name is
   expected (e.g. to assign it in a context)."
-  ([prop-name]
-   `(defprop ~prop-name nil))
-  ([prop-name value]
-   (let [varsym (qualify-sym &env prop-name)
-         propname (propname-for varsym)]
-     (register! props-registry varsym {:propname propname :value value})
-     `(def ~prop-name
-        (css-prop '~propname)))))
+     ([prop-name]
+      `(defprop ~prop-name nil))
+     ([prop-name value]
+      `(defprop ~prop-name nil ~value))
+     ([prop-name docstring value]
+      (let [varsym (qualify-sym &env prop-name)
+            propname (propname-for varsym)
+            value (eval value)]
+        (register! props-registry varsym {:propname propname :value value})
+        `(def ~prop-name
+           ~(str
+             (when docstring
+               (str docstring "\n\n"))
+             "Default: " value)
+           (css-prop '~propname ~value))))))
+
+#?(:clj
+   (defn import-tokens*!
+     ([prefix tokens]
+      (mapcat
+       identity
+       (for [[tname tdef] tokens]
+         (let [tname (str prefix (str/replace tname #"^--" ""))
+               {:strs [$description $value $type]} tdef
+               more (into {} (remove (fn [[k v]] (= (first k) \$))) tdef)]
+           (cond-> [`(defprop ~(symbol tname) ~@(when $description [$description]) ~$value)]
+             (seq more)
+             (into (import-tokens*! (str tname "-") more)))))))))
+
+#?(:clj
+   (defmacro import-tokens!
+     ([tokens]
+      `(import-tokens! "" ~tokens))
+     ([prefix tokens]
+      `(do ~@(import-tokens*! prefix (eval tokens))))))
 
 #?(:clj
    (defn defined-garden []
@@ -796,7 +862,8 @@
       (->> @rules-registry
            vals
            (sort-by :index)
-           (mapcat :rules))
+           (mapcat :rules)
+           (map process-rules))
       (->> @registry
            vals
            (sort-by :index)
