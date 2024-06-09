@@ -834,7 +834,7 @@
       (mapcat
        identity
        (for [[tname tdef] tokens]
-         (let [tname (str prefix (str/replace tname #"^--" ""))
+         (let [tname (str prefix tname)
                {:strs [$description $value $type]} tdef
                more (into {} (remove (fn [[k v]] (= (first k) \$))) tdef)]
            (cond-> [`(defprop ~(symbol tname) ~@(when $description [$description]) ~$value)]
@@ -855,7 +855,7 @@
                        vals
                        (filter (comp some? :value)))]
         (when (seq props)
-          [[":root" (into {}
+          [[":where(html)" (into {}
                           (map (juxt (comp (partial str "--") :propname)
                                      :value))
                           props)]]))
