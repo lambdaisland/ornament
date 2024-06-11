@@ -1,24 +1,24 @@
 (ns lambdaisland.ornament
   "CSS-in-clj(s)"
   #?@
-   (:clj
-    [(:require
-      [clojure.string :as str]
-      [clojure.walk :as walk]
-      [garden.color :as gcolor]
-      [garden.compiler :as gc]
-      [garden.stylesheet :as gs]
-      [garden.types :as gt]
-      [garden.util :as gu]
-      [girouette.tw.color :as girouette-color]
-      [girouette.tw.core :as girouette]
-      [girouette.tw.default-api :as girouette-default]
-      [girouette.tw.preflight :as girouette-preflight]
-      [girouette.tw.typography :as girouette-typography]
-      [girouette.version :as girouette-version]
-      [meta-merge.core :as meta-merge])]
-    :cljs
-    [(:require [clojure.string :as str] [garden.util :as gu])]))
+  (:clj
+   [(:require
+     [clojure.string :as str]
+     [clojure.walk :as walk]
+     [garden.color :as gcolor]
+     [garden.compiler :as gc]
+     [garden.stylesheet :as gs]
+     [garden.types :as gt]
+     [garden.util :as gu]
+     [girouette.tw.color :as girouette-color]
+     [girouette.tw.core :as girouette]
+     [girouette.tw.default-api :as girouette-default]
+     [girouette.tw.preflight :as girouette-preflight]
+     [girouette.tw.typography :as girouette-typography]
+     [girouette.version :as girouette-version]
+     [meta-merge.core :as meta-merge])]
+   :cljs
+   [(:require [clojure.string :as str] [garden.util :as gu])]))
 
 #?(:clj
    (defonce ^{:doc "Registry of styled components
@@ -210,7 +210,7 @@
                         (-> varsym
                             namespace
                             (str/replace #"\." "_")
-                            (->> (str "__"))))]
+                            (str "__")))]
          (str prefix (munge-str (name varsym)))))
 
      (defn join-vector-by [sep val]
@@ -617,6 +617,33 @@
          (gc/compile-css (process-rules rules)))))))
 
 #?(:clj
+   (defn component->selector [&env s]
+     (if (symbol? s)
+       (let [qsym (qualify-sym &env s)]
+         (if (contains? @registry qsym)
+           (str "." (get-in @registry [qsym :classname]))
+           s))
+       s)))
+
+#?(:clj
+   (defn component->rules [&env s]
+     (if (symbol? s)
+       (let [qsym (qualify-sym &env s)]
+         (if (contains? @registry qsym)
+           (get-in @registry [qsym :rules])
+           [s]))
+       [s])))
+
+#?(:clj
+   (defn prop->rvalue [&env s]
+     (if (symbol? s)
+       (let [qsym (qualify-sym &env s)]
+         (if (contains? @props-registry qsym)
+           (str "var(--" (get-in @props-registry [qsym :propname]) ")")
+           s))
+       s)))
+
+#?(:clj
    (defmacro defstyled [sym tagname & styles]
      (let [varsym (symbol (name (ns-name *ns*)) (name sym))
            css-class (classname-for varsym)
@@ -649,34 +676,26 @@
            ;; build output), and when defined defstyled in cljs files there are
            ;; no Clojure vars that we can resolve, so we need to resolve this
            ;; ourselves via the registry.
+           component->selector (partial component->selector &env)
+           prop->rvalue (partial prop->rvalue &env)
+           component->rules (partial component->rules &env)
            rules (eval `(do
                           (in-ns '~(ns-name *ns*))
                           ~(walk/postwalk
                             (fn [o]
-                              (if (vector? o)
-                                (let [component->selector
-                                      (fn [s]
-                                        (if (and (symbol? s)
-                                                 (contains? @registry (qualify-sym &env s)))
-                                          `(str "." (get-in @registry ['~(qualify-sym &env s) :classname]))
-                                          s))]
-                                  (into [(if (set? (first o))
-                                           (into #{} (map component->selector (first o)))
-                                           (component->selector (first o)))]
-                                        (mapcat (fn [s]
-                                                  (if (and (symbol? s)
-                                                           (contains? @registry (qualify-sym &env s)))
-                                                    (get-in @registry [(qualify-sym &env s) :rules])
-                                                    [s])))
-                                        (next o)))
+                              (cond
+                                (vector? o)
+                                (into [(if (set? (first o))
+                                         (into #{} (map component->selector (first o)))
+                                         (component->selector (first o)))]
+                                      (mapcat component->rules)
+                                      (next o))
+                                (map? o)
+                                (update-vals o prop->rvalue)
+                                :else
                                 o))
                             (vec
-                             (mapcat (fn [s]
-                                       (if (and (symbol? s)
-                                                (contains? @registry (qualify-sym &env s)))
-                                         (get-in @registry [(qualify-sym &env s) :rules])
-                                         [s]))
-                                     rules)))))]
+                             (mapcat component->rules rules)))))]
        (register! registry
                   varsym
                   {:var varsym
@@ -767,13 +786,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Props
 
-#?(:clj
-   (defprotocol CSSProp
-     (lvalue [p])
-     (rvalue [p])))
+(defprotocol CSSProp
+  (lvalue [p])
+  (rvalue [p]))
 
-#?(:clj
-   (defn css-prop [prop-name default]
+(defn css-prop [prop-name default]
+  #?(:clj
      (with-meta
        (reify
          CSSProp
@@ -787,6 +805,17 @@
          clojure.lang.ILookup
          (valAt [this kw] (when (= :default kw) default))
          (valAt [this kw fallback] (if (= :default kw) default fallback))
+         )
+       {:type ::prop})
+     :cljs
+     (with-meta
+       (reify
+         CSSProp
+         (lvalue [_] (str "--" (name prop-name)))
+         (rvalue [_] (str "var(--" (name prop-name) ")"))
+         ILookup
+         (-valAt [this kw] (when (= :default kw) default))
+         (-valAt [this kw fallback] (if (= :default kw) default fallback))
          )
        {:type ::prop})))
 
@@ -854,9 +883,9 @@
                        (filter (comp some? :value)))]
         (when (seq props)
           [[":where(html)" (into {}
-                          (map (juxt (comp (partial str "--") :propname)
-                                     :value))
-                          props)]]))
+                                 (map (juxt (comp (partial str "--") :propname)
+                                            :value))
+                                 props)]]))
       (->> @rules-registry
            vals
            (sort-by :index)
