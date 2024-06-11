@@ -790,8 +790,6 @@
          )
        {:type ::prop})))
 
-(clojure.reflect/reflect clojure.lang.ILookup)
-
 #?(:clj
    (defmethod print-method ::prop [p writer]
      (.write writer (lvalue p))))
