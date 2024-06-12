@@ -904,11 +904,12 @@
   Optionally the Tailwind preflight (reset) stylesheet can be prepended using
   `:preflight? true`. This defaults to Tailwind v2 (as provided by Girouette).
   Version 3 is available with `:tw-version 3`"
-     [& [{:keys [preflight? tw-version]
+     [& [{:keys [preflight? tw-version compress?]
           :or {preflight? false
-               tw-version 2}}]]
+               tw-version 2
+               compress? true}}]]
      (gc/compile-css
-      {:pretty-print? false}
+      {:pretty-print? (not compress?)}
       (cond->> (defined-garden)
         preflight? (concat (case tw-version
                              2 girouette-preflight/preflight-v2_0_3
