@@ -1,5 +1,11 @@
 # Unreleased
 
+## Changed
+
+- When setting a custom `:ornament/prefix` on the namespace, the separator `__`
+  is no longer implied, to get the same result add `__` to the end of your
+  prefix string.
+
 ## Added
 
 - Support docstrings, they come after the tagname, before any styles or tokens

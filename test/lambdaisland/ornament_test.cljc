@@ -1,4 +1,4 @@
-(ns ^{:ornament/prefix "ot"}
+(ns ^{:ornament/prefix "ot__"}
     lambdaisland.ornament-test
   (:require [lambdaisland.ornament :as o]
             [clojure.test :refer [deftest testing is are use-fixtures run-tests join-fixtures]]
