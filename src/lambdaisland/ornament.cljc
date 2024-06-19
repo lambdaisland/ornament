@@ -232,7 +232,7 @@
                  (into [] tag)
                  [(cond
                     (= ::styled (type tag))
-                    (classname tag)
+                    (str "." (classname tag))
                     (sequential? tag)
                     (process-rule tag)
                     :else
@@ -361,6 +361,9 @@
   names."
   [classes class]
   (cond
+    (nil? class)
+    classes
+
     (sequential? class)
     (reduce add-class classes class)
 
@@ -416,24 +419,30 @@
    (reduce merge-attrs (merge-attrs p1 p2) ps)))
 
 (defn attr-add-class [attrs class]
-  (update attrs :class add-class class))
+  (if class
+    (update attrs :class add-class class)
+    attrs))
 
 (defn expand-hiccup-tag-simple
   "Expand an ornament component being called directly with child elements, without
   custom render function."
   [tag css-class children extra-attrs]
-  (if (sequential? children)
-    (as-> children $
-      (if (= :<> (first $)) (next $) $)
-      (if (map? (first $))
-        (into [tag (attr-add-class
-                    (merge-attrs (first $) (meta children) extra-attrs)
-                    css-class)] (next $))
-        (into [tag (attr-add-class
-                    (merge-attrs (meta children) extra-attrs)
-                    css-class)]
-              (if (vector? $) (list $) $))))
-    [tag (attr-add-class extra-attrs css-class) children]))
+  (let [[tag attrs children :as result]
+        (if (sequential? children)
+          (as-> children $
+            (if (= :<> (first $)) (next $) $)
+            (if (map? (first $))
+              (into [tag (attr-add-class
+                          (merge-attrs (first $) (meta children) extra-attrs)
+                          css-class)] (next $))
+              (into [tag (attr-add-class
+                          (merge-attrs (meta children) extra-attrs)
+                          css-class)]
+                    (if (vector? $) (list $) $))))
+          [tag (attr-add-class extra-attrs css-class) children])]
+    (if (= :<> (first children))
+      (recur tag nil children attrs)
+      result)))
 
 (defn expand-hiccup-tag
   "Handle expanding/rendering the component to Hiccup
@@ -663,6 +672,12 @@
                       (when (symbol? tagname)
                         (:fn-tails (get @registry (qualify-sym &env tagname)))))
 
+           fn-tails (when (seq fn-tails)
+                      (if (and (= 1 (count fn-tails))
+                               (= 0 (count (ffirst fn-tails))))
+                        `(([] ~@(rest (first fn-tails)))
+                          ([attrs#] [:<> attrs# (do ~@(rest (first fn-tails)))]))
+                        fn-tails))
            ;; For ClojureScript support (but also used in Clojure-only), add the
            ;; Clojure-version of the styled component to the registry directly
            ;; during macroexpansion, so that even in a ClojureScript-only world
@@ -745,9 +760,10 @@
                                  rules
                                  (cons nil rules))
            varsym (qualify-sym &env rules-name)
-           rules   (eval `(do
+           rules  (process-rules
+                   (eval `(do
                             (in-ns '~(ns-name *ns*))
-                            ~(cons 'list rules)))]
+                            ~(cons 'list rules))))]
        (register! rules-registry varsym {:rules rules})
        (when-not (:ns &env)
          `(def ~rules-name ~(render-docstring docstring rules) '~rules)))))
@@ -857,26 +873,43 @@
 
 #?(:clj
    (defn import-tokens*!
-     ([prefix tokens]
+     ([tokens {:keys [include-values? prefix]
+               :or {include-values? true
+                    prefix ""}}]
       (mapcat
        identity
        (for [[tname tdef] tokens]
          (let [tname (str prefix tname)
                {:strs [$description $value $type]} tdef
                more (into {} (remove (fn [[k v]] (= (first k) \$))) tdef)]
-           (cond-> [`(defprop ~(symbol tname) ~@(when $description [$description]) ~$value)]
+           (cond-> [`(defprop ~(symbol tname)
+                       ~@(when $description [(str $description "\n\nDefault: " $value)])
+                       ~@(when (and $value include-values?)
+                           [$value]))]
              (seq more)
              (into (import-tokens*! (str tname "-") more)))))))))
 
 #?(:clj
    (defmacro import-tokens!
-     ([tokens]
-      `(import-tokens! "" ~tokens))
-     ([prefix tokens]
-      `(do ~@(import-tokens*! prefix (eval tokens))))))
+     "Import a standard design tokens JSON file.
+  Emits a sequence of `defprop`, i.e. it defines custom CSS properties (aka
+  variables). See https://design-tokens.github.io/community-group/format/
+  - tokens: parsed JSON, we don't bundle a parser, you have to do that yourself
+  - opts: options map, supports `:prefix` and `:include-values?`. Has to be
+    literal (used by the macro itself)
+    - prefix: string prefix to add to the (clojure and CSS) var names
+    - :include-values? false: only create the Clojure vars to access the props,
+      don't include their definitions/values in the CSS. Presumably because you are
+      loading CSS separately that already defines these.
+  "
+     ([tokens & [opts]]
+      `(do ~@(import-tokens*! (eval tokens) opts)))))
 
 #?(:clj
-   (defn defined-garden []
+   (defn defined-garden
+     "All CSS defined through the different Ornament facilities (defprop, defstyled,
+  defrules), in Garden syntax. Run this through `garden.compiler/compile-css`."
+     []
      (concat
       (let [props (->> @props-registry
                        vals
@@ -889,8 +922,7 @@
       (->> @rules-registry
            vals
            (sort-by :index)
-           (mapcat :rules)
-           (map process-rules))
+           (mapcat :rules))
       (->> @registry
            vals
            (sort-by :index)
@@ -934,3 +966,8 @@
 (comment
   (spit "/tmp/ornament.css" (defined-styles))
   )
+      (->> @rules-registry
+           vals
+           (sort-by :index)
+           (mapcat :rules)
+           process-rules)

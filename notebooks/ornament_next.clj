@@ -44,6 +44,18 @@
   [:* {:box-sizing "border-box"}]
   [:form :mx-2])
 
+;; Ornament features like tailwing utilities or referencing components work here
+;; too.
+
+(o/defstyled menu :nav
+  :hidden)
+
+(o/defrules toggle-menu
+  [:body.menu-open
+   [menu :block]])
+
+(o/defined-garden)
+
 ;; ## defutil
 
 ;; There's now also `defutil` for defining utility classes. This is in a way

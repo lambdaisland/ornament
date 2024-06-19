@@ -3,6 +3,12 @@
 ## Added
 
 - Support docstrings, they come after the tagname, before any styles or tokens
+- If there's only a zero-arg render function (fn-tail), also emit a one-arg
+  version that takes HTML attributes to be merged in.
+- Add `defrules`, for general garden CSS rules
+- Add `defprop`, for CSS custom properties (aka variables)
+- Add `defutil`, for standalone utility classes
+- Add `import-tokens!`, for importing W3C design token JSON files as properties (as per `defprop`)
 
 ## Fixed
 
