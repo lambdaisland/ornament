@@ -1,5 +1,6 @@
 (ns lambdaisland.ornament
   "CSS-in-clj(s)"
+<<<<<<< Updated upstream
   #?@
   (:clj
    [(:require
@@ -19,6 +20,40 @@
      [meta-merge.core :as meta-merge])]
    :cljs
    [(:require [clojure.string :as str] [garden.util :as gu])]))
+||||||| Stash base
+  (:require [clojure.string :as str]
+            [meta-merge.core :as meta-merge]
+            #?@(:clj [[clojure.walk :as walk]
+                      [garden.compiler :as gc]
+                      [garden.core :as garden]
+                      [garden.color :as gcolor]
+                      [garden.types :as gt]
+                      [garden.stylesheet :as gs]
+                      [girouette.version :as girouette-version]
+                      [girouette.tw.core :as girouette]
+                      [girouette.tw.preflight :as girouette-preflight]
+                      [girouette.tw.typography :as girouette-typography]
+                      [girouette.tw.color :as girouette-color]
+                      [girouette.tw.default-api :as girouette-default]]))
+  #?(:cljs
+     (:require-macros [lambdaisland.ornament :refer [defstyled]])))
+=======
+  (:require [clojure.string :as str]
+            [meta-merge.core :as meta-merge]
+            #?@(:clj [[clojure.walk :as walk]
+                      [garden.compiler :as gc]
+                      [garden.core :as garden]
+                      [garden.color :as gcolor]
+                      [garden.types :as gt]
+                      [garden.stylesheet :as gs]
+                      [girouette.version :as girouette-version]
+                      [girouette.tw.core :as girouette]
+                      [girouette.tw.preflight :as girouette-preflight]
+                      [girouette.tw.typography :as girouette-typography]
+                      [girouette.tw.color :as girouette-color]]))
+  #?(:cljs
+     (:require-macros [lambdaisland.ornament :refer [defstyled]])))
+>>>>>>> Stashed changes
 
 #?(:clj
    (defonce ^{:doc "Registry of styled components
@@ -78,16 +113,18 @@
        (atom nil))
 
      (def default-tokens-v2
-       {:components (-> girouette-default/all-tw-components
-                        (girouette-version/filter-components-by-version [:tw 2]))
-        :colors     girouette-color/tw-v2-colors
-        :fonts      girouette-typography/tw-v2-font-family-map})
+       (delay
+         {:components (-> @(requiring-resolve 'girouette.tw.default-api/all-tw-components)
+                          (girouette-version/filter-components-by-version [:tw 2]))
+          :colors     girouette-color/tw-v2-colors
+          :fonts      girouette-typography/tw-v2-font-family-map}))
 
      (def default-tokens-v3
-       {:components (-> girouette-default/all-tw-components
-                        (girouette-version/filter-components-by-version [:tw 3]))
-        :colors     girouette-color/tw-v3-unified-colors-extended
-        :fonts      girouette-typography/tw-v2-font-family-map})
+       (delay
+         {:components (-> @(requiring-resolve 'girouette.tw.default-api/all-tw-components)
+                          (girouette-version/filter-components-by-version [:tw 3]))
+          :colors     girouette-color/tw-v3-unified-colors-extended
+          :fonts      girouette-typography/tw-v2-font-family-map}))
 
      (def default-tokens default-tokens-v2)
 
@@ -127,8 +164,8 @@
        (let [{:keys [components colors fonts]}
              (meta-merge/meta-merge
               (case tw-version
-                2 default-tokens-v2
-                3 default-tokens-v3)
+                2 @default-tokens-v2
+                3 @default-tokens-v3)
               {:components
                (into (empty components)
                      (map (fn [{:keys [id rules garden] :as c}]
