@@ -140,7 +140,7 @@
 
                               :always
                               (update :garden #(comp process-rule %)))))
-                     components)
+                     (flatten components))
                :colors (into (empty colors)
                              (map (juxt (comp name key) val))
                              colors)
@@ -965,9 +965,10 @@
 
 (comment
   (spit "/tmp/ornament.css" (defined-styles))
-  )
-      (->> @rules-registry
-           vals
-           (sort-by :index)
-           (mapcat :rules)
-           process-rules)
+
+  (->> @rules-registry
+       vals
+       (sort-by :index)
+       (mapcat :rules)
+       process-rules))
+
