@@ -19,6 +19,7 @@
 ## Fixed
 
 - Fix `defined-garden`
+- Use of `defrules` in pure-cljs namespaces
 
 # 1.12.107 (2023-09-27 / 2444e34)
 
