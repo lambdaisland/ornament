@@ -75,6 +75,7 @@
 
 (hiccup/render [:img {:class [square]}])
 
+
 ;; You can also use it in styled components, to pull those additional style
 ;; rules into the CSS of the component.
 
@@ -91,7 +92,10 @@
 
 ;; These can be defined with or without
 
-(o/defprop without-default)
-(o/defprop color-primary "hsla(201, 100%, 50%, 1)")
+(o/defprop --without-default)
+(o/defprop --color-primary "hsla(201, 100%, 50%, 1)")
+
+
+(hiccup/render [:img {:style {:backgroun-color --color-primary}}])
 
 (o/defined-styles)
