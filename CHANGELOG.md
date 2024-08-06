@@ -15,11 +15,13 @@
 - Add `defprop`, for CSS custom properties (aka variables)
 - Add `defutil`, for standalone utility classes
 - Add `import-tokens!`, for importing W3C design token JSON files as properties (as per `defprop`)
+- Allow setting metadata on a child list, useful for reagent/react keys
 
 ## Fixed
 
 - Fix `defined-garden`
 - Use of `defrules` in pure-cljs namespaces
+- Fix implementation of ILookup on cljs
 
 # 1.12.107 (2023-09-27 / 2444e34)
 

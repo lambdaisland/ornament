@@ -429,7 +429,8 @@
   "Expand an ornament component being called directly with child elements, without
   custom render function."
   [tag css-class children extra-attrs]
-  (let [[tag attrs children :as result]
+  (let [child-meta (meta children)
+        [tag attrs children :as result]
         (if (sequential? children)
           (as-> children $
             (if (= :<> (first $)) (next $) $)
@@ -441,7 +442,10 @@
                           (merge-attrs (meta children) extra-attrs)
                           css-class)]
                     (if (vector? $) (list $) $))))
-          [tag (attr-add-class extra-attrs css-class) children])]
+          [tag (attr-add-class extra-attrs css-class) children])
+        result (if child-meta
+                 (with-meta result child-meta)
+                 result)]
     (if (= :<> (first children))
       (recur tag nil children attrs)
       result)))
@@ -832,9 +836,8 @@
          (lvalue [_] (str "--" (name prop-name)))
          (rvalue [_] (str "var(--" (name prop-name) ")"))
          ILookup
-         (-valAt [this kw] (when (= :default kw) default))
-         (-valAt [this kw fallback] (if (= :default kw) default fallback))
-         )
+         (-lookup [this kw] (when (= :default kw) default))
+         (-lookup [this kw fallback] (if (= :default kw) default fallback)))
        {:type ::prop})))
 
 #?(:clj
