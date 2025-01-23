@@ -2,9 +2,9 @@
 
 ## Changed
 
-- When setting a custom `:ornament/prefix` on the namespace, the separator `__`
-  is no longer implied, to get the same result add `__` to the end of your
-  prefix string.
+- [BREAKING] When setting a custom `:ornament/prefix` on the namespace, the
+  separator `__` is no longer implied, to get the same result add `__` to the
+  end of your prefix string.
 
 ## Added
 
