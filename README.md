@@ -943,6 +943,21 @@ And get a bullet list which uses bear emojis for the bullets.
 Girouette provides. You can change that by adding a `^:replace` tag (this uses
 meta-merge). e.g. `{:colors ^:replace {...}}`) 
 
+## Babashka compatibility
+
+Unfortunately Ornament is not bb-compatible, and most likely never will be.
+
+Ornament styled components extend the `IFn` interface, babashka only supports
+extending protocols. Extending `IFn` is quite crucial to Ornament's design,
+since this is what allows us to make Hiccup-compatible components, since they
+act as functions.
+
+There are similar issues with libraries we depend on, notably Garden via
+Girouette. Girouette also depends on Instaparse, which is also in its original
+form not bb-compatible.
+
+Making Garden bb-com 
+
 <!-- opencollective -->
 ## Lambda Island Open Source
 

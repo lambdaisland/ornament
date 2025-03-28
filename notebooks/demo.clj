@@ -1,7 +1,8 @@
 (ns demo
-  (:require [lambdaisland.hiccup :as hiccup]
-            [lambdaisland.ornament :as o]
-            [nextjournal.clerk :as clerk]))
+  (:require
+   [lambdaisland.hiccup :as hiccup]
+   [lambdaisland.ornament :as o]
+   [nextjournal.clerk :as clerk]))
 
 ;; # A Small Demonstration of Ornament
 

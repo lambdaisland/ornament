@@ -1,39 +1,38 @@
 {:paths ["src" "resources"]
 
  :deps
- {org.clojure/clojure   {:mvn/version "1.11.1"}
-  garden/garden         {:mvn/version "1.3.10"}
-  girouette/girouette   {:mvn/version "0.0.10"}
-  meta-merge/meta-merge {:mvn/version "1.0.0"}}
+ {org.clojure/clojure     {:mvn/version "1.12.0"}
+  com.lambdaisland/garden {:mvn/version "1.6.585"}
+  girouette/girouette     {:mvn/version "0.0.10"}
+  meta-merge/meta-merge   {:mvn/version "1.0.0"}}
 
  :aliases
  {:dev
   {:extra-paths ["dev"]
-   :extra-deps  {djblue/portal {:mvn/version "0.46.0"}
-                 io.github.nextjournal/clerk {:mvn/version "0.14.919"}
-                 com.lambdaisland/hiccup {:mvn/version "0.0.33"} }}
+   :extra-deps  {io.github.nextjournal/clerk {:mvn/version "0.17.1102"}
+                 com.lambdaisland/hiccup     {:mvn/version "0.14.67"} }}
 
   :byo
-  {:extra-deps {hawk/hawk {:mvn/version "0.2.11"}
-                com.lambdaisland/glogi {:mvn/version "1.3.169"}
-                io.pedestal/pedestal.log {:mvn/version "0.6.0"}}}
+  {:extra-deps {hawk/hawk                {:mvn/version "0.2.11"}
+                com.lambdaisland/glogi   {:mvn/version "1.3.169"}
+                io.pedestal/pedestal.log {:mvn/version "0.7.2"}}}
 
   :test
   {:extra-paths ["test"]
-   :extra-deps  {lambdaisland/kaocha {:mvn/version "1.86.1355"}
-                 lambdaisland/kaocha-cljs {:mvn/version "1.5.154"}
-                 org.clojure/clojurescript {:mvn/version "1.11.60"}
-                 com.lambdaisland/glogi {:mvn/version "1.3.169"}
+   :extra-deps  {lambdaisland/kaocha       {:mvn/version "1.91.1392"}
+                 lambdaisland/kaocha-cljs  {:mvn/version "1.5.154"}
+                 org.clojure/clojurescript {:mvn/version "1.11.132"}
+                 com.lambdaisland/glogi    {:mvn/version "1.3.169"}
                  ;; for lambdaisland.hiccup and lambdaisland.thicc, used in testing
-                 lambdaisland/webstuff {:git/url "https://github.com/lambdaisland/webstuff"
-                                        :git/sha "78033fbda228c5e2fc0745619e7830b005407156"
-                                        #_#_:local/root "/home/arne/github/lambdaisland/webstuff"}}}
+                 lambdaisland/webstuff     {:git/url        "https://github.com/lambdaisland/webstuff"
+                                            :git/sha        "f3ae2a2d41a4335d3da1757a3a21aa1dd1125eb1"
+                                            #_#_:local/root "/home/arne/github/lambdaisland/webstuff"}}}
 
   :cssparser
   {:extra-deps {net.sourceforge.cssparser/cssparser {:mvn/version "0.9.30"}}}
 
   :nextjournal/clerk
-  {:exec-fn nextjournal.clerk/build!
-   :exec-args {:paths ["notebooks/demo.clj"
-                       "notebooks/attributes_and_properties.clj"]}
+  {:exec-fn                   nextjournal.clerk/build!
+   :exec-args                 {:paths ["notebooks/demo.clj"
+                                       "notebooks/attributes_and_properties.clj"]}
    :nextjournal.clerk/aliases [:dev]}}}

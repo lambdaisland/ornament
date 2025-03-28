@@ -1,24 +1,27 @@
 (ns lambdaisland.ornament
   "CSS-in-clj(s)"
-  (:require [clojure.string :as str]
-            [meta-merge.core :as meta-merge]
-            #?@(:clj [[clojure.walk :as walk]
-                      [garden.compiler :as gc]
-                      [garden.core :as garden]
-                      [garden.color :as gcolor]
-                      [garden.types :as gt]
-                      [garden.stylesheet :as gs]
-                      [girouette.version :as girouette-version]
-                      [girouette.tw.core :as girouette]
-                      [girouette.tw.preflight :as girouette-preflight]
-                      [girouette.tw.typography :as girouette-typography]
-                      [girouette.tw.color :as girouette-color]
-                      [girouette.tw.default-api :as girouette-default]]))
-  #?(:cljs
-     (:require-macros [lambdaisland.ornament :refer [defstyled]])))
+  #?@
+  (:clj
+   [(:require
+     [clojure.string :as str]
+     [clojure.walk :as walk]
+     [garden.color :as gcolor]
+     [garden.compiler :as gc]
+     [garden.stylesheet :as gs]
+     [garden.types :as gt]
+     [garden.util :as gu]
+     [girouette.tw.color :as girouette-color]
+     [girouette.tw.core :as girouette]
+     [girouette.tw.default-api :as girouette-default]
+     [girouette.tw.preflight :as girouette-preflight]
+     [girouette.tw.typography :as girouette-typography]
+     [girouette.version :as girouette-version]
+     [meta-merge.core :as meta-merge])]
+   :cljs
+   [(:require [clojure.string :as str] [garden.util :as gu])]))
 
 #?(:clj
-   (defonce ^{:doc "Registry of styles
+   (defonce ^{:doc "Registry of styled components
 
      Keys are fully qualified symbols (var names), values are maps with the
      individual `:tag`, `:rules`, `:classname`. We add an `:index` to be able to
@@ -31,6 +34,16 @@
      only knows about classnames. `:component` points at a StyledComponent
      instance that can be used to get the [[css]] for that component."}
      registry
+     (atom {})))
+
+#?(:clj
+   (defonce ^{:doc "Registry of plain CSS (Garden) rules"}
+     rules-registry
+     (atom {})))
+
+#?(:clj
+   (defonce ^{:doc "Registry of custom properties"}
+     props-registry
      (atom {})))
 
 (def ^:dynamic *strip-prefixes*
@@ -65,16 +78,18 @@
        (atom nil))
 
      (def default-tokens-v2
-       {:components (-> girouette-default/all-tw-components
-                        (girouette-version/filter-components-by-version [:tw 2]))
-        :colors     girouette-color/tw-v2-colors
-        :fonts      girouette-typography/tw-v2-font-family-map})
+       (delay
+         {:components (-> @(requiring-resolve 'girouette.tw.default-api/all-tw-components)
+                          (girouette-version/filter-components-by-version [:tw 2]))
+          :colors     girouette-color/tw-v2-colors
+          :fonts      girouette-typography/tw-v2-font-family-map}))
 
      (def default-tokens-v3
-       {:components (-> girouette-default/all-tw-components
-                        (girouette-version/filter-components-by-version [:tw 3]))
-        :colors     girouette-color/tw-v3-unified-colors-extended
-        :fonts      girouette-typography/tw-v2-font-family-map})
+       (delay
+         {:components (-> @(requiring-resolve 'girouette.tw.default-api/all-tw-components)
+                          (girouette-version/filter-components-by-version [:tw 3]))
+          :colors     girouette-color/tw-v3-unified-colors-extended
+          :fonts      girouette-typography/tw-v2-font-family-map}))
 
      (def default-tokens default-tokens-v2)
 
@@ -114,8 +129,8 @@
        (let [{:keys [components colors fonts]}
              (meta-merge/meta-merge
               (case tw-version
-                2 default-tokens-v2
-                3 default-tokens-v3)
+                2 @default-tokens-v2
+                3 @default-tokens-v3)
               {:components
                (into (empty components)
                      (map (fn [{:keys [id rules garden] :as c}]
@@ -127,7 +142,7 @@
 
                               :always
                               (update :garden #(comp process-rule %)))))
-                     components)
+                     (flatten components))
                :colors (into (empty colors)
                              (map (juxt (comp name key) val))
                              colors)
@@ -173,16 +188,19 @@
         \~ "_TILDE_"
         \? "_QMARK_"})
 
-     (defn munge-str [s]
-       #?(:clj
-          (let [sb (StringBuilder.)]
-            (doseq [ch s]
-              (if-let [repl (get munge-map ch)]
-                (.append sb repl)
-                (.append sb ch)))
-            (str sb))
-          :cljs
-          (apply str (map #(get munge-map % %) s))))
+     (defn munge-str
+       ([s]
+        (munge-str s munge-map))
+       ([s munge-map]
+        #?(:clj
+           (let [sb (StringBuilder.)]
+             (doseq [ch s]
+               (if-let [repl (get munge-map ch)]
+                 (.append sb repl)
+                 (.append sb ch)))
+             (str sb))
+           :cljs
+           (apply str (map #(get munge-map % %) s)))))
 
      (defn classname-for
        "Convert a fully qualified symbol into a CSS classname
@@ -193,8 +211,9 @@
        (let [prefix (or (:ornament/prefix (meta (the-ns (symbol (namespace varsym)))))
                         (-> varsym
                             namespace
-                            (str/replace #"\." "_")))]
-         (str prefix "__" (munge-str (name varsym)))))
+                            (str/replace #"\." "_")
+                            (str "__")))]
+         (str prefix (munge-str (name varsym)))))
 
      (defn join-vector-by [sep val]
        (if (vector? val)
@@ -215,7 +234,7 @@
                  (into [] tag)
                  [(cond
                     (= ::styled (type tag))
-                    (classname tag)
+                    (str "." (classname tag))
                     (sequential? tag)
                     (process-rule tag)
                     :else
@@ -323,9 +342,9 @@
                           (reduce add-rule acc (next r))
 
                           (and (map? r)
-                                 (map? (last acc))
-                                 (not (record? r))
-                                 (not (record? (last acc))))
+                               (map? (last acc))
+                               (not (record? r))
+                               (not (record? (last acc))))
                           (conj (vec (butlast acc))
                                 (merge (last acc) r))
 
@@ -344,6 +363,9 @@
   names."
   [classes class]
   (cond
+    (nil? class)
+    classes
+
     (sequential? class)
     (reduce add-class classes class)
 
@@ -389,34 +411,44 @@
   ([p1 p2]
    (when (or p1 p2)
      (let [merge-entry (fn [m e]
-			 (let [k (key e)
+                         (let [k (key e)
                                v (val e)]
-			   (if (contains? m k)
-			     (assoc m k (merge-attr k (get m k) v))
-			     (assoc m k v))))]
+                           (if (contains? m k)
+                             (assoc m k (merge-attr k (get m k) v))
+                             (assoc m k v))))]
        (reduce merge-entry (or p1 {}) p2))))
   ([p1 p2 & ps]
    (reduce merge-attrs (merge-attrs p1 p2) ps)))
 
 (defn attr-add-class [attrs class]
-  (update attrs :class add-class class))
+  (if class
+    (update attrs :class add-class class)
+    attrs))
 
 (defn expand-hiccup-tag-simple
   "Expand an ornament component being called directly with child elements, without
   custom render function."
   [tag css-class children extra-attrs]
-  (if (sequential? children)
-    (as-> children $
-      (if (= :<> (first $)) (next $) $)
-      (if (map? (first $))
-        (into [tag (attr-add-class
-                    (merge-attrs (first $) (meta children) extra-attrs)
-                    css-class)] (next $))
-        (into [tag (attr-add-class
-                    (merge-attrs (meta children) extra-attrs)
-                    css-class)]
-              (if (vector? $) (list $) $))))
-    [tag (attr-add-class extra-attrs css-class) children]))
+  (let [child-meta (meta children)
+        [tag attrs children :as result]
+        (if (sequential? children)
+          (as-> children $
+            (if (= :<> (first $)) (next $) $)
+            (if (map? (first $))
+              (into [tag (attr-add-class
+                          (merge-attrs (first $) (meta children) extra-attrs)
+                          css-class)] (next $))
+              (into [tag (attr-add-class
+                          (merge-attrs (meta children) extra-attrs)
+                          css-class)]
+                    (if (vector? $) (list $) $))))
+          [tag (attr-add-class extra-attrs css-class) children])
+        result (if child-meta
+                 (with-meta result child-meta)
+                 result)]
+    (if (= :<> (first children))
+      (recur tag nil children attrs)
+      result)))
 
 (defn expand-hiccup-tag
   "Handle expanding/rendering the component to Hiccup
@@ -519,7 +551,6 @@
 
       :cljs
       (let [render-fn
-            ^{:type ::styled}
             (fn [& children]
               (expand-hiccup-tag tag
                                  css-class
@@ -537,7 +568,11 @@
                           (expand-hiccup-tag tag css-class children component))
 
                         Object
-                        (toString [_] css-class))]
+                        (toString [_] css-class)
+
+                        ;; https://ask.clojure.org/index.php/11514/functions-with-metadata-can-not-take-more-than-20-arguments
+                        cljs.core/IMeta
+                        (-meta [_] {:type ::styled}))]
         (js/Object.defineProperty component "name" #js {:value (str varsym)})
         component))))
 
@@ -562,9 +597,66 @@
                  aliases (ns-aliases *ns*)]
              (symbol (or (some-> aliases (get (symbol ns)) ns-name str) ns) n)))))))
 
-#?(:clj (defn fn-tail? [o]
-          (and (list? o)
-               (vector? (first o)))))
+#?(:clj
+   (defn fn-tail? [o]
+     (and (list? o)
+          (vector? (first o)))))
+
+#?(:clj
+   (defn update-index [registry varsym]
+     (update-in registry [varsym :index] (fnil identity (count registry)))))
+
+#?(:clj
+   (defn register! [reg varsym m]
+     ;; We give each style an incrementing index so they get a predictable
+     ;; order (i.e. source order). If a style is evaluated again (e.g. REPL use)
+     ;; then it keeps its original index/position.
+     (swap! reg
+            (fn [reg]
+              (-> reg
+                  (update varsym merge m)
+                  (update-index varsym))))))
+
+#?(:clj
+   (defn render-docstring
+     "Add the compiled CSS to the docstring, for easy dev-time reference. Ignored
+  when `*compile-files*` is true, to prevent CSS from bloating up a production
+  build."
+     [docstring rules]
+     (str
+      docstring
+      (when (not *compile-files*)
+        (str
+         (when docstring
+           (str "\n\n"))
+         (gc/compile-css (process-rules rules)))))))
+
+#?(:clj
+   (defn component->selector [&env s]
+     (if (symbol? s)
+       (let [qsym (qualify-sym &env s)]
+         (if (contains? @registry qsym)
+           (str "." (get-in @registry [qsym :classname]))
+           s))
+       s)))
+
+#?(:clj
+   (defn component->rules [&env s]
+     (if (symbol? s)
+       (let [qsym (qualify-sym &env s)]
+         (if (contains? @registry qsym)
+           (get-in @registry [qsym :rules])
+           [s]))
+       [s])))
+
+#?(:clj
+   (defn prop->rvalue [&env s]
+     (if (symbol? s)
+       (let [qsym (qualify-sym &env s)]
+         (if (contains? @props-registry qsym)
+           (str "var(--" (get-in @props-registry [qsym :propname]) ")")
+           s))
+       s)))
 
 #?(:clj
    (defmacro defstyled [sym tagname & styles]
@@ -586,6 +678,12 @@
                       (when (symbol? tagname)
                         (:fn-tails (get @registry (qualify-sym &env tagname)))))
 
+           fn-tails (when (seq fn-tails)
+                      (if (and (= 1 (count fn-tails))
+                               (= 0 (count (ffirst fn-tails))))
+                        `(([] ~@(rest (first fn-tails)))
+                          ([attrs#] [:<> attrs# (do ~@(rest (first fn-tails)))]))
+                        fn-tails))
            ;; For ClojureScript support (but also used in Clojure-only), add the
            ;; Clojure-version of the styled component to the registry directly
            ;; during macroexpansion, so that even in a ClojureScript-only world
@@ -599,52 +697,38 @@
            ;; build output), and when defined defstyled in cljs files there are
            ;; no Clojure vars that we can resolve, so we need to resolve this
            ;; ourselves via the registry.
+           component->selector (partial component->selector &env)
+           prop->rvalue (partial prop->rvalue &env)
+           component->rules (partial component->rules &env)
            rules (eval `(do
                           (in-ns '~(ns-name *ns*))
                           ~(walk/postwalk
                             (fn [o]
-                              (if (vector? o)
-                                (let [component->selector
-                                      (fn [s]
-                                        (if (and (symbol? s)
-                                                 (contains? @registry (qualify-sym &env s)))
-                                          `(str "." (get-in @registry ['~(qualify-sym &env s) :classname]))
-                                          s))]
-                                  (into [(if (set? (first o))
-                                           (into #{} (map component->selector (first o)))
-                                           (component->selector (first o)))]
-                                        (mapcat (fn [s]
-                                                  (if (and (symbol? s)
-                                                           (contains? @registry (qualify-sym &env s)))
-                                                    (get-in @registry [(qualify-sym &env s) :rules])
-                                                    [s])))
-                                        (next o)))
+                              (cond
+                                (vector? o)
+                                (into [(if (set? (first o))
+                                         (into #{} (map component->selector (first o)))
+                                         (component->selector (first o)))]
+                                      (mapcat component->rules)
+                                      (next o))
+                                (map? o)
+                                (update-vals o prop->rvalue)
+                                :else
                                 o))
                             (vec
-                             (mapcat (fn [s]
-                                       (if (and (symbol? s)
-                                                (contains? @registry (qualify-sym &env s)))
-                                         (get-in @registry [(qualify-sym &env s) :rules])
-                                         [s]))
-                                     rules)))))]
-       (swap! registry
-              (fn [reg]
-                (-> reg
-                    (update varsym merge {:var varsym
-                                          :tag tag
-                                          :rules rules
-                                          :classname css-class
-                                          :fn-tails fn-tails
-                                          :component (styled varsym
-                                                             css-class
-                                                             tag
-                                                             rules
-                                                             nil)})
-                    ;; We give each style an incrementing index so they get a
-                    ;; predictable order (i.e. source order). If a style is
-                    ;; evaluated again (e.g. REPL use) then it keeps its
-                    ;; original index/position.
-                    (update-in [varsym :index] (fnil identity (count reg))))))
+                             (mapcat component->rules rules)))))]
+       (register! registry
+                  varsym
+                  {:var varsym
+                   :tag tag
+                   :rules rules
+                   :classname css-class
+                   :fn-tails fn-tails
+                   :component (styled varsym
+                                      css-class
+                                      tag
+                                      rules
+                                      nil)})
 
        ;; Actual output of the macro, this creates a styled component as a var,
        ;; so that it can be used in Hiccup. This `styled` invocation in turn is
@@ -652,10 +736,13 @@
        ;; the component with the appropriate classes, it has no knowledge of the
        ;; actual styles, which are expected to be rendered on the backend or
        ;; during compilation.
-       `(def ~(with-meta sym (cond-> {::css true
-                                      :ornament (dissoc (get @registry varsym) :component :fn-tails)}
-                               docstring
-                               (assoc :doc docstring)))
+       `(def ~(with-meta sym
+                {::css true
+                 :ornament (dissoc (get @registry varsym) :component :fn-tails)
+                 :arglists (if (seq fn-tails)
+                             `'~(map first fn-tails)
+                             ''([] [& children] [attrs & children]))
+                 :doc (render-docstring docstring [(into [(str "." css-class)] rules)])})
           (styled '~varsym
                   ~css-class
                   ~tag
@@ -663,13 +750,189 @@
                   ~(when (seq fn-tails)
                      `(fn ~@fn-tails)))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Rules
+
 #?(:clj
-   (defn defined-garden []
-     (->> @registry
-          vals
-          (sort-by :index)
-          (map (fn [{:keys [var tag rules classname]}]
-                 (as-garden (styled var classname tag rules nil)))))))
+   (defmacro defrules
+     "Define plain garden rules. Takes an optional docstring, and any number of
+  Garden rules (vectors of selector + styles, possibly nested, at-rules, etc).
+
+  Defines a var just so that you can inspect what's been evaluated, but the main
+  action is the side-effect of registering the rules in a registry, which gets
+  prepended to the rest of your Ornament CSS."
+     [rules-name & rules]
+     (let [[docstring & rules] (if (string? (first rules))
+                                 rules
+                                 (cons nil rules))
+           varsym (qualify-sym &env rules-name)
+           rules  (process-rules
+                   (eval `(do
+                            (in-ns '~(ns-name *ns*))
+                            ~(cons 'clojure.core/list rules))))]
+       (register! rules-registry varsym {:rules rules})
+       (when-not (:ns &env)
+         `(def ~rules-name ~(render-docstring docstring rules) '~rules)))))
+
+#?(:clj
+   (defmacro defutil
+     "Define utility class, takes a name for the class, optionally a docstring, and a
+  style map. Use the util var in your styles or as as class in hiccup."
+     ([util-name styles]
+      `(defutil ~util-name ~nil ~styles))
+     ([util-name docstring styles]
+      (let [varsym (qualify-sym &env util-name)
+            klzname (classname-for varsym)
+            rules (list [(str "." klzname)
+                         (eval `(do
+                                  (in-ns '~(ns-name *ns*))
+                                  ~styles))])
+            docstring (render-docstring docstring rules)]
+        (register! rules-registry varsym {:rules rules})
+        `(def ~util-name
+           ~docstring
+           (with-meta
+             (reify
+               Object
+               (toString [_] ~klzname)
+               gc/IExpandable
+               (expand [_]
+                 (gc/expand
+                  [:& ~styles])))
+             {:type ::util}))))))
+
+#?(:clj
+   (defmethod print-method ::util [u writer]
+     (.write writer (str u))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Props
+
+(defprotocol CSSProp
+  (lvalue [p])
+  (rvalue [p]))
+
+(defn css-prop [prop-name default]
+  #?(:clj
+     (with-meta
+       (reify
+         CSSProp
+         (lvalue [_] (str "--" (name prop-name)))
+         (rvalue [_] (str "var(--" (name prop-name) ")"))
+         gu/ToString
+         (to-str [this]
+           (str "--" (name prop-name)))
+         Object
+         (toString [_] (str "var(--" (name prop-name) ")"))
+         clojure.lang.ILookup
+         (valAt [this kw] (when (= :default kw) default))
+         (valAt [this kw fallback] (if (= :default kw) default fallback))
+         )
+       {:type ::prop})
+     :cljs
+     (with-meta
+       (reify
+         CSSProp
+         (lvalue [_] (str "--" (name prop-name)))
+         (rvalue [_] (str "var(--" (name prop-name) ")"))
+         ILookup
+         (-lookup [this kw] (when (= :default kw) default))
+         (-lookup [this kw fallback] (if (= :default kw) default fallback)))
+       {:type ::prop})))
+
+#?(:clj
+   (defmethod print-method ::prop [p writer]
+     (.write writer (lvalue p))))
+
+#?(:clj
+   (defn propname-for
+     [propsym]
+     (let [prefix (or (:ornament/prefix (meta (the-ns (symbol (namespace propsym)))))
+                      (-> propsym
+                          namespace
+                          (str/replace #"\." "-")
+                          (str "--")))]
+       (str prefix (munge-str (str/replace (name propsym)
+                                           #"^--" "") (dissoc munge-map \-))))))
+
+#?(:clj
+   (defmacro defprop
+     "Define a custom CSS property (variable). Use the resulting var either where a
+  value is expected (will expand to `var(--var-name)`), or where a name is
+  expected (e.g. to assign it in a context)."
+     ([prop-name]
+      `(defprop ~prop-name nil))
+     ([prop-name value]
+      `(defprop ~prop-name nil ~value))
+     ([prop-name docstring value]
+      (let [varsym (qualify-sym &env prop-name)
+            propname (propname-for varsym)
+            value (eval value)]
+        (register! props-registry varsym {:propname propname :value value})
+        `(def ~prop-name
+           ~(str
+             (when docstring
+               (str docstring "\n\n"))
+             "Default: " value)
+           (css-prop '~propname ~value))))))
+
+#?(:clj
+   (defn import-tokens*!
+     ([tokens {:keys [include-values? prefix]
+               :or {include-values? true
+                    prefix ""}}]
+      (mapcat
+       identity
+       (for [[tname tdef] tokens]
+         (let [tname (str prefix tname)
+               {:strs [$description $value $type]} tdef
+               more (into {} (remove (fn [[k v]] (= (first k) \$))) tdef)]
+           (cond-> [`(defprop ~(symbol tname)
+                       ~@(when $description [(str $description "\n\nDefault: " $value)])
+                       ~@(when (and $value include-values?)
+                           [$value]))]
+             (seq more)
+             (into (import-tokens*! (str tname "-") more)))))))))
+
+#?(:clj
+   (defmacro import-tokens!
+     "Import a standard design tokens JSON file.
+  Emits a sequence of `defprop`, i.e. it defines custom CSS properties (aka
+  variables). See https://design-tokens.github.io/community-group/format/
+  - tokens: parsed JSON, we don't bundle a parser, you have to do that yourself
+  - opts: options map, supports `:prefix` and `:include-values?`. Has to be
+    literal (used by the macro itself)
+    - prefix: string prefix to add to the (clojure and CSS) var names
+    - :include-values? false: only create the Clojure vars to access the props,
+      don't include their definitions/values in the CSS. Presumably because you are
+      loading CSS separately that already defines these.
+  "
+     ([tokens & [opts]]
+      `(do ~@(import-tokens*! (eval tokens) opts)))))
+
+#?(:clj
+   (defn defined-garden
+     "All CSS defined through the different Ornament facilities (defprop, defstyled,
+  defrules), in Garden syntax. Run this through `garden.compiler/compile-css`."
+     []
+     (concat
+      (let [props (->> @props-registry
+                       vals
+                       (filter (comp some? :value)))]
+        (when (seq props)
+          [[":where(html)" (into {}
+                                 (map (juxt (comp (partial str "--") :propname)
+                                            :value))
+                                 props)]]))
+      (->> @rules-registry
+           vals
+           (sort-by :index)
+           (mapcat :rules))
+      (->> @registry
+           vals
+           (sort-by :index)
+           (map (fn [{:keys [var tag rules classname]}]
+                  (as-garden (styled var classname tag rules nil))))))))
 
 #?(:clj
    (defn defined-styles
@@ -678,11 +941,12 @@
   Optionally the Tailwind preflight (reset) stylesheet can be prepended using
   `:preflight? true`. This defaults to Tailwind v2 (as provided by Girouette).
   Version 3 is available with `:tw-version 3`"
-     [& [{:keys [preflight? tw-version]
+     [& [{:keys [preflight? tw-version compress?]
           :or {preflight? false
-               tw-version 2}}]]
+               tw-version 2
+               compress? true}}]]
      (gc/compile-css
-      {:pretty-print? false}
+      {:pretty-print? (not compress?)}
       (cond->> (defined-garden)
         preflight? (concat (case tw-version
                              2 girouette-preflight/preflight-v2_0_3
@@ -705,5 +969,10 @@
                        [(:var ornament) ornament]))))))
 
 (comment
- (spit "/tmp/ornament.css" (defined-styles))
- )
+  (spit "/tmp/ornament.css" (defined-styles))
+
+  (->> @rules-registry
+       vals
+       (sort-by :index)
+       (mapcat :rules)
+       process-rules))

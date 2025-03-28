@@ -1,12 +1,27 @@
 # Unreleased
 
+## Changed
+
+- [BREAKING] When setting a custom `:ornament/prefix` on the namespace, the
+  separator `__` is no longer implied, to get the same result add `__` to the
+  end of your prefix string.
+
 ## Added
 
 - Support docstrings, they come after the tagname, before any styles or tokens
+- If there's only a zero-arg render function (fn-tail), also emit a one-arg
+  version that takes HTML attributes to be merged in.
+- Add `defrules`, for general garden CSS rules
+- Add `defprop`, for CSS custom properties (aka variables)
+- Add `defutil`, for standalone utility classes
+- Add `import-tokens!`, for importing W3C design token JSON files as properties (as per `defprop`)
+- Allow setting metadata on a child list, useful for reagent/react keys
 
 ## Fixed
 
 - Fix `defined-garden`
+- Use of `defrules` in pure-cljs namespaces
+- Fix implementation of ILookup on cljs
 
 # 1.12.107 (2023-09-27 / 2444e34)
 
