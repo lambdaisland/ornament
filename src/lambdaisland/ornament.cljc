@@ -623,13 +623,15 @@
   when `*compile-files*` is true, to prevent CSS from bloating up a production
   build."
      [docstring rules]
-     (str
-      docstring
-      (when (not *compile-files*)
-        (str
-         (when docstring
-           (str "\n\n"))
-         (gc/compile-css (process-rules rules)))))))
+     (let [css (gc/compile-css (process-rules rules))]
+       (str
+        docstring
+        (when (not *compile-files*)
+          (str
+           (when (and (not (str/blank? docstring))
+                      (not (str/blank? css)))
+             (str "\n\n"))
+           css))))))
 
 #?(:clj
    (defn component->selector [&env s]

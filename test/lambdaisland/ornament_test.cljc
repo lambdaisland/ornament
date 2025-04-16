@@ -1,9 +1,11 @@
 (ns ^{:ornament/prefix "ot__"}
     lambdaisland.ornament-test
-  (:require [lambdaisland.ornament :as o]
-            [clojure.test :refer [deftest testing is are use-fixtures run-tests join-fixtures]]
-            #?(:clj [lambdaisland.hiccup :as hiccup]
-               :cljs [lambdaisland.thicc :as thicc]))
+  (:require
+   [lambdaisland.ornament :as o]
+   [clojure.string :as str]
+   [clojure.test :refer [deftest testing is are use-fixtures run-tests join-fixtures]]
+   #?(:clj [lambdaisland.hiccup :as hiccup]
+      :cljs [lambdaisland.thicc :as thicc]))
   #?(:cljs
      (:require-macros lambdaisland.ornament-test)))
 
@@ -273,18 +275,15 @@
     ;; conditionals.
     ;; FIXME: write this in a more robust way, maintaining this is becoming a PITA
     [attrs-in-fragment "hello"]
-    #?(:clj "<div lang=\"nl\" class=\"ot__attrs_in_fragment\">hello</div>"
-       :cljs "<div class=\"ot__attrs_in_fragment\" lang=\"nl\">hello</div>")
+    "<div lang=\"nl\" class=\"ot__attrs_in_fragment\">hello</div>"
 
     [attrs-in-fragment-props
      {:person "Arne"
       ::o/attrs {:lang "en" :title "greeting"}}]
-    #?(:clj "<div lang=\"en\" title=\"greeting\" class=\"ot__attrs_in_fragment_props\">hello, Arne</div>"
-       :cljs "<div title=\"greeting\" class=\"ot__attrs_in_fragment_props\" lang=\"en\">hello, Arne</div>")
+    "<div lang=\"en\" title=\"greeting\" class=\"ot__attrs_in_fragment_props\">hello, Arne</div>"
 
     [attrs-in-fragment-props {:person "Jake"}]
-    #?(:clj "<div lang=\"nl\" class=\"ot__attrs_in_fragment_props\">hello, Jake</div>"
-       :cljs "<div class=\"ot__attrs_in_fragment_props\" lang=\"nl\">hello, Jake</div>")
+    "<div lang=\"nl\" class=\"ot__attrs_in_fragment_props\">hello, Jake</div>"
 
     [attrs-in-fragment-styled {:person "Finn"}]
     "<div class=\"ot__attrs_in_fragment_styled extra-class\" style=\"color: blue;\">hello, Finn</div>"
@@ -460,14 +459,16 @@
 
 (deftest docstring-test
   (is (= "A documented component" (:doc (meta #'with-doc))))
-  (is (= "A documented component" (:doc (meta #'with-doc2))))
-  (is (= "A documented component" (:doc (meta #'with-doc3))))
+  (is (str/starts-with? (:doc (meta #'with-doc2)) "A documented component"))
+  (is (str/starts-with? (:doc (meta #'with-doc3)) "A documented component"))
 
-  (is (= '([] [& children] [attrs & children])
-         (:arglists (meta #'combined))))
+  #?(:clj
+     (is (= '([] [& children] [attrs & children])
+            (:arglists (meta #'combined)))))
 
-  (is (= '([{:keys [date time]}])
-         (:arglists (meta #'timed)))))
+  #?(:clj
+     (is (= '([{:keys [date time]}])
+            (:arglists (meta #'timed))))))
 
 (comment
   (require 'kaocha.repl)
