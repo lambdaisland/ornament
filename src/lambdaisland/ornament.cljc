@@ -18,7 +18,8 @@
      [girouette.version :as girouette-version]
      [meta-merge.core :as meta-merge])]
    :cljs
-   [(:require [clojure.string :as str] [garden.util :as gu])]))
+   [(:require [clojure.string :as str] [garden.util :as gu])
+    (:require-macros lambdaisland.ornament)]))
 
 #?(:clj
    (defonce ^{:doc "Registry of styled components
