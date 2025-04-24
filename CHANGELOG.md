@@ -1,10 +1,8 @@
 # Unreleased
 
-## Added
-
 ## Fixed
 
-## Changed
+- Add a require-macros so defstyled can be referred from cljs directly
 
 # 1.14.134 (2025-04-24 / dadcb61)
 
