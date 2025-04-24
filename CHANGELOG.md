@@ -1,10 +1,8 @@
 # Unreleased
 
-## Added
-
 ## Fixed
 
-## Changed
+- Deal with more edge cases when referencing tokens inside style rules
 
 # 1.13.130 (2025-04-16 / 83c295f)
 

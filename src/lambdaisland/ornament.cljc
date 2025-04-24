@@ -446,7 +446,7 @@
         result (if child-meta
                  (with-meta result child-meta)
                  result)]
-    (if (= :<> (first children))
+    (if (and (sequential? children) (= :<> (first children)))
       (recur tag nil children attrs)
       result)))
 
@@ -652,6 +652,15 @@
        [s])))
 
 #?(:clj
+   (defn prop->lvalue [&env s]
+     (if (symbol? s)
+       (let [qsym (qualify-sym &env s)]
+         (if (contains? @props-registry qsym)
+           (str "--" (get-in @props-registry [qsym :propname]))
+           s))
+       s)))
+
+#?(:clj
    (defn prop->rvalue [&env s]
      (if (symbol? s)
        (let [qsym (qualify-sym &env s)]
@@ -659,6 +668,45 @@
            (str "var(--" (get-in @props-registry [qsym :propname]) ")")
            s))
        s)))
+
+#?(:clj
+   (defn eval-rules [&env rules]
+     ;; For ClojureScript support (but also used in Clojure-only), add the
+     ;; Clojure-version of the styled component to the registry directly
+     ;; during macroexpansion, so that even in a ClojureScript-only world
+     ;; we can access it later to compile the styles, even though the
+     ;; styles themselves are never part of a ClojureScript build.
+     ;;
+     ;; To allow using previously defined styled components as selectors
+     ;; we do our own resolution of these symbols, if we recognize them.
+     ;; This is necessary since in ClojureScript rules are fully handled
+     ;; on the Clojure side (we don't want any of the CSS overhead in the
+     ;; build output), and when defined defstyled in cljs files there are
+     ;; no Clojure vars that we can resolve, so we need to resolve this
+     ;; ourselves via the registry.
+     (let [component->selector (partial component->selector &env)
+           prop->rvalue (partial prop->rvalue &env)
+           prop->lvalue (partial prop->lvalue &env)
+           component->rules (partial component->rules &env)]
+       (eval `(do
+                (in-ns '~(ns-name *ns*))
+                ~(walk/postwalk
+                  (fn [o]
+                    (cond
+                      (vector? o)
+                      (into [(if (set? (first o))
+                               (into #{} (map component->selector (first o)))
+                               (component->selector (first o)))]
+                            (mapcat component->rules)
+                            (next o))
+                      (map? o)
+                      (-> o
+                          (update-keys prop->lvalue)
+                          (update-vals prop->rvalue))
+                      :else
+                      o))
+                  (vec
+                   (mapcat component->rules rules))))))))
 
 #?(:clj
    (defmacro defstyled [sym tagname & styles]
@@ -685,45 +733,12 @@
                                (= 0 (count (ffirst fn-tails))))
                         `(([] ~@(rest (first fn-tails)))
                           ([attrs#] [:<> attrs# (do ~@(rest (first fn-tails)))]))
-                        fn-tails))
-           ;; For ClojureScript support (but also used in Clojure-only), add the
-           ;; Clojure-version of the styled component to the registry directly
-           ;; during macroexpansion, so that even in a ClojureScript-only world
-           ;; we can access it later to compile the styles, even though the
-           ;; styles themselves are never part of a ClojureScript build.
-           ;;
-           ;; To allow using previously defined styled components as selectors
-           ;; we do our own resolution of these symbols, if we recognize them.
-           ;; This is necessary since in ClojureScript rules are fully handled
-           ;; on the Clojure side (we don't want any of the CSS overhead in the
-           ;; build output), and when defined defstyled in cljs files there are
-           ;; no Clojure vars that we can resolve, so we need to resolve this
-           ;; ourselves via the registry.
-           component->selector (partial component->selector &env)
-           prop->rvalue (partial prop->rvalue &env)
-           component->rules (partial component->rules &env)
-           rules (eval `(do
-                          (in-ns '~(ns-name *ns*))
-                          ~(walk/postwalk
-                            (fn [o]
-                              (cond
-                                (vector? o)
-                                (into [(if (set? (first o))
-                                         (into #{} (map component->selector (first o)))
-                                         (component->selector (first o)))]
-                                      (mapcat component->rules)
-                                      (next o))
-                                (map? o)
-                                (update-vals o prop->rvalue)
-                                :else
-                                o))
-                            (vec
-                             (mapcat component->rules rules)))))]
+                        fn-tails))]
        (register! registry
                   varsym
                   {:var varsym
                    :tag tag
-                   :rules rules
+                   :rules (eval-rules &env rules)
                    :classname css-class
                    :fn-tails fn-tails
                    :component (styled varsym
@@ -769,9 +784,7 @@
                                  (cons nil rules))
            varsym (qualify-sym &env rules-name)
            rules  (process-rules
-                   (eval `(do
-                            (in-ns '~(ns-name *ns*))
-                            ~(cons 'clojure.core/list rules))))]
+                   (eval-rules &env rules))]
        (register! rules-registry varsym {:rules rules})
        (when-not (:ns &env)
          `(def ~rules-name ~(render-docstring docstring rules) '~rules)))))
@@ -828,8 +841,7 @@
          (toString [_] (str "var(--" (name prop-name) ")"))
          clojure.lang.ILookup
          (valAt [this kw] (when (= :default kw) default))
-         (valAt [this kw fallback] (if (= :default kw) default fallback))
-         )
+         (valAt [this kw fallback] (if (= :default kw) default fallback)))
        {:type ::prop})
      :cljs
      (with-meta
@@ -839,7 +851,10 @@
          (rvalue [_] (str "var(--" (name prop-name) ")"))
          ILookup
          (-lookup [this kw] (when (= :default kw) default))
-         (-lookup [this kw fallback] (if (= :default kw) default fallback)))
+         (-lookup [this kw fallback] (if (= :default kw) default fallback))
+         Object
+         (toString [_]
+           (str "--" (name prop-name))))
        {:type ::prop})))
 
 #?(:clj
