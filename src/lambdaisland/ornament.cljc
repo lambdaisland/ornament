@@ -733,12 +733,13 @@
                                (= 0 (count (ffirst fn-tails))))
                         `(([] ~@(rest (first fn-tails)))
                           ([attrs#] [:<> attrs# (do ~@(rest (first fn-tails)))]))
-                        fn-tails))]
+                        fn-tails))
+           rules (eval-rules &env rules)]
        (register! registry
                   varsym
                   {:var varsym
                    :tag tag
-                   :rules (eval-rules &env rules)
+                   :rules rules
                    :classname css-class
                    :fn-tails fn-tails
                    :component (styled varsym
