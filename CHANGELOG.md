@@ -1,10 +1,9 @@
 # Unreleased
 
-## Added
-
-## Fixed
-
 ## Changed
+
+- Only include compiled CSS in cljs docstrings when the cljs optimization level
+  is `:none`
 
 # 1.15.138 (2025-04-24 / 8299d3c)
 

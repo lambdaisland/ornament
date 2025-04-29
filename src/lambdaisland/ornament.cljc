@@ -619,15 +619,24 @@
                   (update-index varsym))))))
 
 #?(:clj
+   (defn cljs-optimization-level []
+     (some->
+      (try (requiring-resolve 'cljs.env/*compiler*)
+           (catch Exception _))
+      deref deref :options :optimizations)))
+
+#?(:clj
    (defn render-docstring
      "Add the compiled CSS to the docstring, for easy dev-time reference. Ignored
-  when `*compile-files*` is true, to prevent CSS from bloating up a production
-  build."
+  when `*compile-files*` is true (AOT compiling Clojure), or cljs optimization
+  level is not `:none` (prod CLJS builds), to prevent CSS from bloating up a
+  production build."
      [docstring rules]
      (let [css (gc/compile-css (process-rules rules))]
        (str
         docstring
-        (when (not *compile-files*)
+        (when (and (not *compile-files*)
+                   (#{:none nil} (cljs-optimization-level)))
           (str
            (when (and (not (str/blank? docstring))
                       (not (str/blank? css)))
