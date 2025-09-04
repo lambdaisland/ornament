@@ -943,6 +943,14 @@ And get a bullet list which uses bear emojis for the bullets.
 Girouette provides. You can change that by adding a `^:replace` tag (this uses
 meta-merge). e.g. `{:colors ^:replace {...}}`) 
 
+## clj-kondo Support
+
+This library includes a built-in clj-kondo configuration to improve linting for Ornament components.
+
+To use the configuration, simply copy the .clj-kondo/ directory from this repository into the root of your project.
+
+After copying the directory, clj-kondo will automatically use this configuration to provide more accurate linting and reduce false positives in your Ornament projects.
+
 ## Babashka compatibility
 
 Unfortunately Ornament is not bb-compatible, and most likely never will be.
