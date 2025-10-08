@@ -838,22 +838,26 @@
   (lvalue [p])
   (rvalue [p]))
 
+#?(:clj
+   (deftype CSSProperty [prop-name default]
+     CSSProp
+     (lvalue [_] (str "--" (name prop-name)))
+     (rvalue [_] (str "var(--" (name prop-name) ")"))
+     gu/ToString
+     (to-str [this]
+       (str "--" (name prop-name)))
+     Object
+     (toString [_] (str "var(--" (name prop-name) ")"))
+     clojure.lang.ILookup
+     (valAt [this kw] (when (= :default kw) default))
+     (valAt [this kw fallback] (if (= :default kw) default fallback))
+     clojure.lang.IMeta
+     (meta [this] {:type ::prop}))
+   )
+
 (defn css-prop [prop-name default]
   #?(:clj
-     (with-meta
-       (reify
-         CSSProp
-         (lvalue [_] (str "--" (name prop-name)))
-         (rvalue [_] (str "var(--" (name prop-name) ")"))
-         gu/ToString
-         (to-str [this]
-           (str "--" (name prop-name)))
-         Object
-         (toString [_] (str "var(--" (name prop-name) ")"))
-         clojure.lang.ILookup
-         (valAt [this kw] (when (= :default kw) default))
-         (valAt [this kw fallback] (if (= :default kw) default fallback)))
-       {:type ::prop})
+     (->CSSProperty prop-name default)
      :cljs
      (with-meta
        (reify
@@ -870,6 +874,9 @@
 
 #?(:clj
    (defmethod print-method ::prop [p writer]
+     (.write writer (lvalue p)))
+
+   (defmethod print-dup CssProperty [p writer]
      (.write writer (lvalue p))))
 
 #?(:clj
