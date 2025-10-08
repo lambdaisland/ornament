@@ -874,9 +874,10 @@
 
 #?(:clj
    (defmethod print-method ::prop [p writer]
-     (.write writer (lvalue p)))
+     (.write writer (lvalue p))))
 
-   (defmethod print-dup CssProperty [p writer]
+#?(:clj
+   (defmethod print-dup CSSProperty [p writer]
      (.write writer (lvalue p))))
 
 #?(:clj
