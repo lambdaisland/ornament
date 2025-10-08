@@ -1,10 +1,8 @@
 # Unreleased
 
-## Added
-
 ## Fixed
 
-## Changed
+- Make CSSProps implement print-dup, so they can be AOTd
 
 # 1.16.141 (2025-04-29 / 8c00784)
 
