@@ -28,7 +28,11 @@
             (api/reg-finding! {:row (:row (meta fn-tag))
                                :col (:col (meta fn-tag))
                                :message "fn-tag must be at least a list or nil"
-                               :type :lambdaisland.ornament/invalid-syntax}))]
+                               :type :lambdaisland.ornament/invalid-syntax}))
+        def-class-form (api/list-node
+                        (list (api/token-node 'def)
+                              class-name
+                              (api/token-node 'nil)))]
     (if (api/list-node? fn-tag)
       (let [[binding-vec & body] (:children fn-tag)
             new-node (api/list-node
@@ -39,4 +43,4 @@
         (prn :new-node (api/sexpr new-node))
         {:node new-node})
      ;; nil node
-      {:node true})))
+      {:node def-class-form})))
