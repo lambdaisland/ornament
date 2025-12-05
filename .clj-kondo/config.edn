@@ -1,3 +1,5 @@
 {:lint-as {lambdaisland.ornament/defprop clojure.core/def
            lambdaisland.ornament/defrules clojure.core/def}
- :hooks {:analyze-call {lambdaisland.ornament/defstyled hooks.ornament/defstyled}}}
+ :hooks {:analyze-call {lambdaisland.ornament/defstyled hooks.ornament/defstyled}}
+ :linters {:lambdaisland.ornament/invalid-syntax
+           {:level :warning}}}
