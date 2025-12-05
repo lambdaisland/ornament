@@ -13,12 +13,13 @@
         _ (when-not (api/keyword-node? html-tag)
             (api/reg-finding! {:row (:row (meta html-tag))
                                :col (:col (meta html-tag))
-                               :message "Html-tag must be a keyword"
+                               :message "Tag must be a keyword or an ornament-styled-component"
                                :type :lambdaisland.ornament/invalid-syntax}))
         ; _ (prn :html-tag html-tag)
         ; _ (prn :more more)
         fn-tag (first (drop-while (fn [x]
-                                    (or (api/keyword-node? x)
+                                    (or (api/string-node? x)
+                                        (api/keyword-node? x)
                                         (api/map-node? x)
                                         (api/vector-node? x)))
                                   more))
