@@ -22,25 +22,30 @@
                                         (api/map-node? x)
                                         (api/vector-node? x)))
                                   more))
-        _ (prn :fn-tag fn-tag)
-        _ (when (or (api/list-node? fn-tag)
-                    (nil? fn-tag))
+        ; _ (prn :fn-tag fn-tag)
+        _ (when (and fn-tag
+                     (not (api/list-node? fn-tag)))
             (api/reg-finding! {:row (:row (meta fn-tag))
                                :col (:col (meta fn-tag))
-                               :message "fn-tag must be at least a list or nil"
-                               :type :lambdaisland.ornament/invalid-syntax}))
-        def-class-form (api/list-node
-                        (list (api/token-node 'def)
-                              class-name
-                              (api/token-node 'nil)))]
+                               :message "Function part (if present) must be a list"
+                               :type :lambdaisland.ornament/invalid-syntax}))]
     (if (api/list-node? fn-tag)
       (let [[binding-vec & body] (:children fn-tag)
-            new-node (api/list-node
-                      (list*
-                       (api/token-node 'fn)
-                       binding-vec
-                       body))]
-        (prn :new-node (api/sexpr new-node))
-        {:node new-node})
+            fn-node (api/list-node
+                     (list*
+                      (api/token-node 'fn)
+                      binding-vec
+                      body))
+            new-def-node (api/list-node
+                          (list (api/token-node 'def)
+                                class-name
+                                fn-node))]
+        (prn :new-def-node (api/sexpr new-def-node))
+        {:node new-def-node})
      ;; nil node
-      {:node def-class-form})))
+      (let [def-class-form (api/list-node
+                            (list (api/token-node 'def)
+                                  class-name
+                                  (api/token-node 'nil)))]
+        (prn :def-class-form (api/sexpr def-class-form))
+        {:node def-class-form}))))
