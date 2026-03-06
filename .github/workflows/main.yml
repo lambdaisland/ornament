@@ -31,6 +31,7 @@ jobs:
         uses: DeLaGuardo/setup-clojure@master
         with:
           cli: '1.10.3.943'
+          clj-kondo: 'latest'
 
       - name: 🗝 maven cache
         uses: actions/cache@v4
