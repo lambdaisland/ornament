@@ -945,11 +945,26 @@ meta-merge). e.g. `{:colors ^:replace {...}}`)
 
 ## clj-kondo Support
 
-This library includes a built-in clj-kondo configuration to improve linting for Ornament components.
+Ornament ships clj-kondo hooks and configuration that validate `defstyled` forms — catching bad tag names, invalid syntax, and providing correct `def`-like analysis.
 
-To use the configuration, simply copy the .clj-kondo/ directory from this repository into the root of your project.
+The hooks are bundled in the JAR under `clj-kondo.exports/`. To activate them in your project:
 
-After copying the directory, clj-kondo will automatically use this configuration to provide more accurate linting and reduce false positives in your Ornament projects.
+1. Ensure a `.clj-kondo` directory exists at your project root:
+   ```
+   mkdir -p .clj-kondo
+   ```
+
+2. Copy the configs from your dependencies:
+   ```
+   clj-kondo --lint "$(clojure -Spath)" --copy-configs --skip-lint
+   ```
+
+3. Warm the linting cache:
+   ```
+   clj-kondo --lint "$(clojure -Spath)" --dependencies --parallel
+   ```
+
+After that, clj-kondo will automatically validate `defstyled` forms in your project. Consider checking the copied configs into version control.
 
 ## Babashka compatibility
 
