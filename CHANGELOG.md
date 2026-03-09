@@ -2,6 +2,10 @@
 
 ## Added
 
+- Export clj-kondo hooks and config via `resources/clj-kondo.exports/` so library
+  consumers can activate them by running
+  `clj-kondo --copy-configs --dependencies --lint classpath`
+
 ## Fixed
 
 ## Changed
