@@ -947,13 +947,24 @@ meta-merge). e.g. `{:colors ^:replace {...}}`)
 
 Ornament ships clj-kondo hooks and configuration that validate `defstyled` forms — catching bad tag names, invalid syntax, and providing correct `def`-like analysis.
 
-The hooks are bundled in the JAR under `clj-kondo.exports/`. To activate them in your project, run:
+The hooks are bundled in the JAR under `clj-kondo.exports/`. To activate them in your project:
 
-```bash
-clj-kondo --copy-configs --dependencies --lint classpath
-```
+1. Ensure a `.clj-kondo` directory exists at your project root:
+   ```
+   mkdir -p .clj-kondo
+   ```
 
-This copies the config and hook into your `.clj-kondo/` directory. After that, clj-kondo will automatically validate `defstyled` forms in your project.
+2. Copy the configs from your dependencies:
+   ```
+   clj-kondo --lint "$(clojure -Spath)" --copy-configs --skip-lint
+   ```
+
+3. Warm the linting cache:
+   ```
+   clj-kondo --lint "$(clojure -Spath)" --dependencies --parallel
+   ```
+
+After that, clj-kondo will automatically validate `defstyled` forms in your project. Consider checking the copied configs into version control.
 
 ## Babashka compatibility
 
